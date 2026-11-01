@@ -2,7 +2,7 @@
 
 A React app that captures photos at the highest resolution your device's camera offers, scores their quality, and lets you annotate them with labeled bounding boxes on desktop, tablet, and phone. It handles touch as well as mouse and pen.
 
-**Live demo:** _TODO: add the Vercel URL after deployment (see [Deployment](#deployment))._
+**Live demo:** _TODO: add the Netlify or Cloudflare Pages URL after deployment (see [Deployment](#deployment))._
 **Demo video:** _TODO: add a link once recorded._
 
 ## Features
@@ -126,14 +126,17 @@ All thresholds are defined in one place: [`src/features/quality/lib/thresholds.t
 
 ## Deployment
 
-The app builds to static files, so any HTTPS host works.
+The app builds to static files and deploys for free on **Netlify** or **Cloudflare Pages**. Both provide the HTTPS that camera access requires. The repo is pre-configured:
 
-```bash
-npm run build        # outputs dist/
-npx vercel --prod    # or connect the repo in the Vercel dashboard (preset: Vite, output: dist)
-```
+- `.nvmrc` pins Node 22 (read by both platforms).
+- `netlify.toml` holds the Netlify build settings.
+- `public/_headers` sets security headers on both platforms, including `Permissions-Policy: camera=(self)`.
 
-HTTPS is required for camera access, and Vercel provides it automatically.
+**Netlify:** Add new site → Import an existing project → GitHub → `img-capture-annotation`. The settings are read from `netlify.toml`, so just click Deploy.
+
+**Cloudflare Pages:** Workers & Pages → Create → Pages → Connect to Git → `img-capture-annotation`. Choose the **Vite** framework preset (build command `npm run build`, output directory `dist`), then Save and Deploy.
+
+Either way, every push to `main` redeploys automatically.
 
 ## Spec-driven development
 
