@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://img-capture-annotation/export-format.schema.json",
+  "title": "Annotation Export (enhancement, FR-036 / US8)",
+  "description": "File produced by 'Export data'. Coordinates are integer pixels in the full-resolution image, origin top-left.",
+  "type": "object",
+  "required": ["version", "image", "annotations", "exportedAt"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "image": {
+      "type": "object",
+      "required": ["width", "height", "byteSize", "mimeType", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "byteSize": { "type": "integer", "minimum": 0 },
+        "mimeType": { "type": "string", "pattern": "^image/" },
+        "source": { "enum": ["camera", "upload"] },
+        "capturedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "verdict": { "enum": ["good", "fair", "poor"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "rating", "value"],
+            "properties": {
+              "id": { "enum": ["resolution", "fileSize", "brightness", "sharpness"] },
+              "rating": { "enum": ["good", "fair", "poor"] },
+              "value": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "bbox"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string", "maxLength": 50 },
+          "bbox": {
+            "type": "object",
+            "required": ["x", "y", "width", "height"],
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "integer", "minimum": 0 },
+              "y": { "type": "integer", "minimum": 0 },
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
