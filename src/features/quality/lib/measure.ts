@@ -52,6 +52,10 @@ export async function measureImage(image: CapturedImage): Promise<ImageMetrics> 
       drawable.release();
       return base;
     }
+    // High-quality (area-averaging) downscale. The default "low" quality skips pixels when
+    // shrinking ~8×, and the resulting aliasing inflated sharpness scores ~4× in calibration.
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(drawable.source, 0, 0, w, h);
     drawable.release();
     const { data } = ctx.getImageData(0, 0, w, h);

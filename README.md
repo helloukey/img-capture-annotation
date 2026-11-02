@@ -98,9 +98,22 @@ All thresholds are defined in one place: [`src/features/quality/lib/thresholds.t
 | Resolution | ≥ 5 MP | 2–5 MP | < 2 MP | 5 MP preserves fine detail such as text and small parts at typical framing. Below 2 MP (under 1080p) detail is visibly lost. |
 | File size | 500 KB–15 MB | 150–500 KB, or > 15 MB | < 150 KB | At these resolutions, a very small JPEG almost always means a dark, flat, or covered frame. Over 15 MB is fine, but slow to share. |
 | Brightness (mean Rec. 709 luma) | 25–80% | 15–25%, 80–90% | < 15%, > 90% | Catches under- and overexposure. The tip mentions the torch only when it's supported. |
-| Sharpness (variance of Laplacian at 512 px) | ≥ 100 | 40–100 | < 40 | A standard blur measure. These are provisional values from the literature, to be calibrated on devices (see below). |
+| Sharpness (variance of Laplacian at 512 px) | ≥ 300 | 100–300 | < 100 | A standard blur measure, calibrated on a real 12.5 MP phone photo (see below). |
 
-**Calibration status:** _In progress (T093). A sharp real-device photo measured **2766**, far above the provisional cut-offs, so the thresholds likely need raising. Capture 10 sharp and 10 deliberately blurred photos per reference device, read the "Laplacian variance" value under **Technical details** in the quality panel, and adjust `sharpness` if needed so at least 9 of 10 are classified correctly._
+**Sharpness calibration:** The provisional textbook values (100 / 40) proved far too lenient: real photos scored 570–3,700, so the blur warning would never fire. Two changes fixed this:
+
+1. **High-quality downscaling.** The 512 px analysis copy is now made with `imageSmoothingQuality: 'high'`. The browser's default "low" quality skips pixels when shrinking about 8×, and the resulting aliasing inflated sharp-photo scores about 4× (2351 vs 588 on the same image).
+2. **Thresholds from measured blur.** A real 12.5 MP Android photo and Gaussian-blurred copies of it were scored with the app's exact pipeline:
+
+| Variant | Score | Rating |
+|---|---|---|
+| Original | 588 | Good |
+| Focus blur σ = 2 px (barely visible) | 399 | Good |
+| Focus blur σ = 4 px (noticeably soft) | 196 | Fair |
+| Focus blur σ = 6 px | 117 | Fair |
+| Focus blur σ = 8 px (clearly blurry) | 55 | Poor |
+
+Reproduce it with `node scripts/calibrate-sharpness.mjs <photo.jpg>`. The scores depend on scene content (plain, low-texture scenes score lower), so this is one calibration scene and should be confirmed with real handheld blurry shots.
 
 ## Browser and device support
 

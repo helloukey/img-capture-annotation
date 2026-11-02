@@ -173,6 +173,10 @@ All `NEEDS CLARIFICATION` items from the Technical Context are resolved here.
     ~500 px images. They will be validated against 10 sharp and 10 deliberately blurred captures
     per reference device (SC-007), and the final values will be recorded in `thresholds.ts` and
     the README.
+    **Outcome (T093):** real photos scored 570–3,700 with the default low-quality
+    downscale, which aliases and inflates scores. Measurement now uses
+    `imageSmoothingQuality: 'high'`, and thresholds were recalibrated to **good ≥ 300,
+    poor < 100** from a real 12.5 MP photo and blurred copies (see README).
   - **Overall verdict**: the worst individual rating (FR-018).
   - Each check has a message and an improvement tip, for example "Too dark — turn on the torch or
     move to brighter light". The torch tip appears only when the torch is supported.

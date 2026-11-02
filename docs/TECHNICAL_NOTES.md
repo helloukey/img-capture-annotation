@@ -70,7 +70,7 @@ There are four checks, each rated Good, Fair, or Poor. The verdict is the worst 
 
 **How it runs:**
 
-- The photo is decoded once and drawn to a canvas scaled so its long side is **512 px**, about 200K pixels.
+- The photo is decoded once and drawn to a canvas scaled so its long side is **512 px**, about 200K pixels, using `imageSmoothingQuality: 'high'`. The default low-quality downscale aliases when shrinking about 8×, which inflated sharpness scores about 4× and made them noise-dependent.
 - Brightness and sharpness are computed from that copy. This takes tens of milliseconds even for 12 MP or larger photos, and the original photo is never modified.
 - Resolution and file size appear immediately. The pixel checks show "Analyzing…" until they're done.
 - Results are cached per image, so moving between Review and Annotate never re-runs the analysis.
@@ -81,7 +81,7 @@ There are four checks, each rated Good, Fair, or Poor. The verdict is the worst 
 - A Poor verdict makes **Retake** the primary action and relabels continue as "Use anyway". You're never blocked.
 - If pixel analysis fails, those checks rate Fair with "Couldn't analyze…". A missing measurement never produces a false Poor.
 
-**Calibration.** The sharpness cut-offs (good ≥ 100, poor < 40) are provisional values from the literature for images around 500 px. The **Technical details** disclosure shows the raw luma and Laplacian values so they can be calibrated on real devices. [`quickstart.md`](../specs/001-image-capture-annotation/quickstart.md) describes the procedure.
+**Calibration.** The cut-offs are **good ≥ 300, poor < 100**. They were measured by scoring a real 12.5 MP phone photo and Gaussian-blurred copies with the app's exact pipeline: sharp ≈ 590, σ 2 px ≈ 400, σ 4 px ≈ 200, σ 8 px ≈ 55 ([`scripts/calibrate-sharpness.mjs`](../scripts/calibrate-sharpness.mjs)). The textbook starting values (100 / 40) never fired on real photos. The **Technical details** disclosure shows the raw luma and Laplacian values for further on-device checks.
 
 ## 3. Annotation approach
 
