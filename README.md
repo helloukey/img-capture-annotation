@@ -100,7 +100,7 @@ All thresholds are defined in one place: [`src/features/quality/lib/thresholds.t
 | Brightness (mean Rec. 709 luma) | 25–80% | 15–25%, 80–90% | < 15%, > 90% | Catches under- and overexposure. The tip mentions the torch only when it's supported. |
 | Sharpness (variance of Laplacian at 512 px) | ≥ 100 | 40–100 | < 40 | A standard blur measure. These are provisional values from the literature, to be calibrated on devices (see below). |
 
-**Calibration status:** _TODO (T093). Capture 10 sharp and 10 deliberately blurred photos per reference device, read the "Laplacian variance" value under **Technical details** in the quality panel, and adjust `sharpness` if needed so at least 9 of 10 are classified correctly._
+**Calibration status:** _In progress (T093). A sharp real-device photo measured **2766**, far above the provisional cut-offs, so the thresholds likely need raising. Capture 10 sharp and 10 deliberately blurred photos per reference device, read the "Laplacian variance" value under **Technical details** in the quality panel, and adjust `sharpness` if needed so at least 9 of 10 are classified correctly._
 
 ## Browser and device support
 
@@ -111,7 +111,15 @@ All thresholds are defined in one place: [`src/features/quality/lib/thresholds.t
 | Safari (iOS / macOS) | Canvas at full stream resolution (no `ImageCapture`) | Used if Safari reports the capability, otherwise shown as unavailable | The video stream (often 4K) is the resolution ceiling |
 | Firefox | Canvas at full stream resolution | ❌ | Best effort |
 
-**Tested devices:** _TODO (T097): record results from Android Chrome, iPhone Safari, and a laptop webcam._ Automated coverage comes from Playwright's Chromium fake camera, at desktop size and in Pixel 7 touch emulation.
+**Tested devices:**
+
+| Device / browser | Result |
+|---|---|
+| Android phone, Chrome (live site) | ✅ Live preview, capture, review, annotation and export all work. A 12.5 MP (3072 × 4080) photo was captured, above the 4K video ceiling, so the full photo pipeline was used. Torch toggle confirmed working on real hardware. All quality checks rated Good outdoors (sharpness 2766, brightness 37%). |
+| iPhone, Safari | _TODO_ |
+| Laptop webcam | _TODO_ |
+
+Automated coverage also comes from Playwright's Chromium fake camera, at desktop size and in Pixel 7 touch emulation, run both locally and against the live site.
 
 ## Known limitations and trade-offs
 
