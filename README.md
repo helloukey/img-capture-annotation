@@ -113,7 +113,7 @@ All thresholds are defined in one place: [`src/features/quality/lib/thresholds.t
 | Focus blur σ = 6 px | 117 | Fair |
 | Focus blur σ = 8 px (clearly blurry) | 55 | Poor |
 
-Reproduce it with `node scripts/calibrate-sharpness.mjs <photo.jpg>`. The scores depend on scene content (plain, low-texture scenes score lower), so this is one calibration scene and should be confirmed with real handheld blurry shots.
+Reproduce it with `node scripts/calibrate-sharpness.mjs <photo.jpg>`. The scores depend on scene content (plain, low-texture scenes score lower), so this is one calibration scene. **Confirmed on device:** handheld shots with deliberate camera shake on the Android phone are rated Fair or Poor for sharpness, while steady shots rate Good.
 
 ## Browser and device support
 
@@ -129,8 +129,8 @@ Reproduce it with `node scripts/calibrate-sharpness.mjs <photo.jpg>`. The scores
 | Device / browser | Result |
 |---|---|
 | Android phone, Chrome (live site) | ✅ Live preview, capture, review, annotation and export all work. A 12.5 MP (3072 × 4080) photo was captured, above the 4K video ceiling, so the full photo pipeline was used. Torch toggle confirmed working on real hardware. All quality checks rated Good outdoors (sharpness 2766, brightness 37%). |
-| iPhone, Safari | _TODO_ |
-| Laptop webcam | _TODO_ |
+| MacBook Air webcam (FaceTime HD), Chrome | ✅ Capture via `ImageCapture.takePhoto()` at the camera's 1280 × 720 maximum. The quality panel correctly rates resolution Poor (with the "use a higher-resolution camera" tip) and the 160 KB file size Fair. The torch is shown as unavailable, as expected on a laptop. |
+| iPhone, Safari | ⚠️ Not tested (no device available). Expected: canvas capture at the stream resolution (Safari has no `ImageCapture`), and the torch shown as unavailable unless Safari reports the capability. Both paths are covered by unit tests with fake devices. |
 
 Automated coverage also comes from Playwright's Chromium fake camera, at desktop size and in Pixel 7 touch emulation, run both locally and against the live site.
 
