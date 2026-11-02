@@ -1,0 +1,520 @@
+1
+00:00:05,500 --> 00:00:07,380
+Hey hi this is Kunal and this is a demo video for image capture
+
+2
+00:00:07,380 --> 00:00:11,360
+and annotation assessment.
+
+3
+00:00:11,360 --> 00:00:13,800
+So let's start with the demo.
+
+4
+00:00:13,800 --> 00:00:22,760
+So the project is hosted on this Netlify site and the link is img-capture-annotation.netlify.app.
+
+5
+00:00:22,760 --> 00:00:25,640
+You can get the link from the README file.
+
+6
+00:00:25,640 --> 00:00:28,460
+So once you are on this site it will ask you for your camera
+
+7
+00:00:28,460 --> 00:00:30,720
+permission so let me allow it.
+
+8
+00:00:30,720 --> 00:00:34,240
+So you will get the camera preview.
+
+9
+00:00:34,240 --> 00:00:37,650
+You also have the option to upload your own image from the file
+
+10
+00:00:37,650 --> 00:00:39,000
+system or you can directly
+
+11
+00:00:39,000 --> 00:00:40,640
+capture it here.
+
+12
+00:00:40,640 --> 00:00:47,920
+So let me capture one.
+
+13
+00:00:47,920 --> 00:00:50,400
+Once the image is captured it will show you with some of the
+
+14
+00:00:50,400 --> 00:00:51,680
+details like image quality
+
+15
+00:00:51,680 --> 00:00:56,220
+resolution, file size, brightness and sharpness and some of the
+
+16
+00:00:56,220 --> 00:00:57,880
+technical details like capture
+
+17
+00:00:57,880 --> 00:01:04,720
+method format, mean luma, Laplacian variance and the camera source.
+
+18
+00:01:04,720 --> 00:01:10,240
+And you can see the image quality is poor since I am on my laptop's camera.
+
+19
+00:01:10,240 --> 00:01:13,520
+I will also show you how it looks from your smartphone.
+
+20
+00:01:13,520 --> 00:01:17,040
+So give it a minute.
+
+21
+00:01:17,040 --> 00:01:21,580
+So once you have the captured image you have the option to
+
+22
+00:01:21,580 --> 00:01:23,400
+retake or you can use this.
+
+23
+00:01:23,400 --> 00:01:28,560
+Now you can add annotation from the screen so you can just drag
+
+24
+00:01:28,560 --> 00:01:30,400
+and release it and it
+
+25
+00:01:30,400 --> 00:01:33,840
+will show you with the label box.
+
+26
+00:01:33,840 --> 00:01:36,560
+So you can add a label here.
+
+27
+00:01:36,560 --> 00:01:45,410
+Let me add a label and let me add one more annotation and give
+
+28
+00:01:45,410 --> 00:01:48,040
+it a label: Hand.
+
+29
+00:01:48,040 --> 00:01:51,880
+So on the right hand side you can see the annotation list.
+
+30
+00:01:51,880 --> 00:01:56,420
+You have the option to directly like just update the label by
+
+31
+00:01:56,420 --> 00:01:57,560
+clicking it here.
+
+32
+00:01:57,560 --> 00:02:01,720
+And you can also delete annotation and undo it.
+
+33
+00:02:01,720 --> 00:02:06,260
+Once you are satisfied with your changes you have the option to
+
+34
+00:02:06,260 --> 00:02:07,440
+export it in JSON or the
+
+35
+00:02:07,440 --> 00:02:11,280
+actual image that will contain the annotation and the label.
+
+36
+00:02:11,280 --> 00:02:19,080
+So let me show you and let me also download the JSON.
+
+37
+00:02:19,080 --> 00:02:22,240
+So yeah I have the downloaded files.
+
+38
+00:02:22,240 --> 00:02:25,280
+So let me show you with the image first.
+
+39
+00:02:25,280 --> 00:02:31,590
+So you can see it has the annotation box, the label for both
+
+40
+00:02:31,590 --> 00:02:35,400
+the annotation that I captured.
+
+41
+00:02:35,400 --> 00:02:38,410
+And for the JSON if you want to work with the database it will
+
+42
+00:02:38,410 --> 00:02:39,760
+have some of the details
+
+43
+00:02:39,760 --> 00:02:45,370
+like the image detail, quality, annotations with the x/y position where
+
+44
+00:02:45,370 --> 00:02:48,560
+they were drawn, plus the width and height as well.
+
+45
+00:02:48,560 --> 00:02:52,760
+So these are some of the details.
+
+46
+00:02:52,760 --> 00:02:57,300
+And yeah one more thing like even if you resize the window the
+
+47
+00:02:57,300 --> 00:02:59,320
+annotation will stay intact
+
+48
+00:02:59,320 --> 00:03:01,760
+and won't lose its position.
+
+49
+00:03:01,760 --> 00:03:07,000
+You can see even if I am resizing the window.
+
+50
+00:03:07,000 --> 00:03:10,920
+So it is unaffected yeah.
+
+51
+00:03:10,920 --> 00:03:16,720
+So yeah let's see how it looks on my smartphone.
+
+52
+00:03:16,720 --> 00:03:23,160
+Okay now I am using my phone so let me open my web browser and
+
+53
+00:03:23,160 --> 00:03:25,920
+I am already on this site
+
+54
+00:03:25,920 --> 00:03:29,640
+and already give it a camera access.
+
+55
+00:03:29,640 --> 00:03:37,300
+So this is the layout of it and you can see the flashlight
+
+56
+00:03:37,300 --> 00:03:41,120
+toggle there and yeah you can
+
+57
+00:03:41,120 --> 00:03:49,870
+see this box and again you can see this button to upload image
+
+58
+00:03:49,870 --> 00:03:53,240
+from your file system and
+
+59
+00:03:53,240 --> 00:03:57,000
+you can also toggle the camera.
+
+60
+00:03:57,000 --> 00:04:00,640
+So yeah this is the front camera and this is the back camera.
+
+61
+00:04:00,640 --> 00:04:07,560
+So let me capture one image to quickly show you.
+
+62
+00:04:07,560 --> 00:04:12,050
+Yeah so it gave me some of the details like quality resolution
+
+63
+00:04:12,050 --> 00:04:13,880
+file size brightness again
+
+64
+00:04:13,880 --> 00:04:19,490
+what we saw on our desktop and we have the option to
+
+65
+00:04:19,490 --> 00:04:21,480
+retake or use this photo.
+
+66
+00:04:21,480 --> 00:04:27,920
+So let me use this and you can quickly drag and add a label
+
+67
+00:04:27,920 --> 00:04:31,240
+here, laptop again you can
+
+68
+00:04:31,240 --> 00:04:36,160
+resize it if you want to drag it left and right.
+
+69
+00:04:36,160 --> 00:04:45,010
+Let me add one other annotation called mini and yeah this looks
+
+70
+00:04:45,010 --> 00:04:46,920
+fine to me.
+
+71
+00:04:46,920 --> 00:04:51,950
+Now from the annotation list again we can like update the label
+
+72
+00:04:51,950 --> 00:04:53,600
+and also delete if you
+
+73
+00:04:53,600 --> 00:05:02,880
+want to and finally we can like download the JSON file and the image.
+
+74
+00:05:02,880 --> 00:05:12,380
+So let me download one and yeah you can see this is exactly how
+
+75
+00:05:12,380 --> 00:05:15,520
+it should be so yeah.
+
+76
+00:05:15,520 --> 00:05:18,920
+So yeah in the end let me also tell you how I planned this project.
+
+77
+00:05:18,920 --> 00:05:22,540
+So instead of throwing everything blindly to my code editor
+
+78
+00:05:22,540 --> 00:05:24,520
+agent I followed a spec-driven
+
+79
+00:05:24,520 --> 00:05:28,440
+architecture, so let me show you yeah.
+
+80
+00:05:28,440 --> 00:05:33,080
+So this is the GitHub repository with over 145k stars so I
+
+81
+00:05:33,080 --> 00:05:35,240
+followed this pattern so what
+
+82
+00:05:35,240 --> 00:05:40,060
+it does like instead of like blindly start working on the code
+
+83
+00:05:40,060 --> 00:05:41,840
+to achieve a specific
+
+84
+00:05:41,840 --> 00:05:48,600
+feature or a product without like following a specific pattern.
+
+85
+00:05:48,600 --> 00:05:53,140
+So what it does is follows this pattern by creating a first
+
+86
+00:05:53,140 --> 00:05:54,080
+constitution file we have
+
+87
+00:05:54,080 --> 00:05:58,620
+to specify what we are trying to achieve already did that then
+
+88
+00:05:58,620 --> 00:06:00,040
+we can use Spec
+
+89
+00:06:00,040 --> 00:06:04,580
+kit specify with like the smaller module which we are trying to
+
+90
+00:06:04,580 --> 00:06:06,000
+achieve then the plan of
+
+91
+00:06:06,000 --> 00:06:10,740
+it of how we are going to achieve it we are like open to
+
+92
+00:06:10,740 --> 00:06:13,280
+specify it or like ask it to
+
+93
+00:06:13,280 --> 00:06:20,330
+handle it itself then we then with speckit tasks what it
+
+94
+00:06:20,330 --> 00:06:22,680
+does like it divide the task
+
+95
+00:06:22,680 --> 00:06:27,110
+into smaller chunks to work on individually or at parallel then
+
+96
+00:06:27,110 --> 00:06:28,480
+in the final step what
+
+97
+00:06:28,480 --> 00:06:33,010
+it does is just implement with whatever the task and
+
+98
+00:06:33,010 --> 00:06:34,480
+constitution file it creates with
+
+99
+00:06:34,480 --> 00:06:39,040
+the code and in the end with converge whatever task or
+
+100
+00:06:39,040 --> 00:06:41,320
+feature is remaining it can
+
+101
+00:06:41,320 --> 00:06:44,880
+work on by taking a reference from all these files.
+
+102
+00:06:44,880 --> 00:06:50,610
+So yeah in my code editor let me also show you those so yeah as
+
+103
+00:06:50,610 --> 00:06:53,200
+I mentioned like it already
+
+104
+00:06:53,200 --> 00:06:59,000
+like creates at the initial stage the .specify folder and
+
+105
+00:06:59,000 --> 00:07:01,100
+the .claude folder so in the
+
+106
+00:07:01,100 --> 00:07:05,310
+.specify folder it creates a constitution markdown file so
+
+107
+00:07:05,310 --> 00:07:06,920
+it acts as a base of what
+
+108
+00:07:06,920 --> 00:07:11,460
+we are trying to achieve then also it like for this project it
+
+109
+00:07:11,460 --> 00:07:13,080
+creates a custom skills
+
+110
+00:07:13,080 --> 00:07:17,840
+to work on so instead of like installing some generic skills to
+
+111
+00:07:17,840 --> 00:07:19,960
+work with it creates a custom
+
+112
+00:07:19,960 --> 00:07:24,500
+skills specific especially for this project so we don't have to
+
+113
+00:07:24,500 --> 00:07:26,200
+like every time mentioned
+
+114
+00:07:26,200 --> 00:07:30,740
+to look for this and look for that it just takes from the
+
+115
+00:07:30,740 --> 00:07:32,720
+skills whatever whatever the
+
+116
+00:07:32,720 --> 00:07:39,030
+project is installed for so yeah I'm using Claude, so it is using
+
+117
+00:07:39,030 --> 00:07:40,480
+Claude and yeah there is
+
+118
+00:07:40,480 --> 00:07:46,090
+also a specs folder so it contains all the data for the task
+
+119
+00:07:46,090 --> 00:07:48,640
+specification research quick
+
+120
+00:07:48,640 --> 00:07:53,180
+start and also a plan of what we are trying to achieve so you
+
+121
+00:07:53,180 --> 00:07:55,080
+can see everything is done
+
+122
+00:07:55,080 --> 00:07:58,790
+and all like with every task completed I am updating my like
+
+123
+00:07:58,790 --> 00:08:00,560
+markdown files here
+
+124
+00:08:00,560 --> 00:08:06,720
+as well so yeah so as I said like instead of like blindly
+
+125
+00:08:06,720 --> 00:08:08,840
+trying to achieve the feature
+
+126
+00:08:08,840 --> 00:08:13,430
+or assessment like I gone with the spec-driven architecture
+
+127
+00:08:13,430 --> 00:08:15,560
+and the only thing I haven't
+
+128
+00:08:15,560 --> 00:08:20,380
+tested is I haven't tested it on iPhone cause I don't have one
+
+129
+00:08:20,380 --> 00:08:22,160
+so yeah that is the only
+
+130
+00:08:22,160 --> 00:08:28,760
+thing remaining I would say yeah that's it thanks so this is it from me.
+

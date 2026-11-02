@@ -3,7 +3,7 @@
 A React app that captures photos at the highest resolution your device's camera offers, scores their quality, and lets you annotate them with labeled bounding boxes on desktop, tablet, and phone. It handles touch as well as mouse and pen.
 
 **Live demo:** https://img-capture-annotation.netlify.app/
-**Demo video:** _TODO: add a link once recorded._
+**Demo video:** https://youtu.be/LJ5oYIeJERw (8½ min: desktop demo, Android demo, and how it was planned; captions in [`demo/snap-and-annotate-demo.srt`](demo/snap-and-annotate-demo.srt))
 
 ## Features
 

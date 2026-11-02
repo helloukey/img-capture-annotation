@@ -15,3 +15,8 @@ Thumbs.db
 .vscode/
 .idea/
 .vercel
+
+# Demo video: raw recordings and rendered output (too large for git; host externally)
+*.mov
+/quick-demo-*.mp4
+/demo/*.mp4

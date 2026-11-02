@@ -413,7 +413,7 @@ Documentation and deployment are required deliverables (FR-037–FR-040).
 
   Fix any failures, and record everything in the README's tested-devices section
 - [X] T098 Code cleanup. Remove dead code and dev-only logs (keep the measure timing behind `import.meta.env.DEV`), make sure no `src/features/*/lib` module imports React (the lint rule from T005 passes), and confirm the initial JS bundle is under 200 KB gzipped (`npm run build` output)
-- [ ] T099 Record the demo video (manual): capture → quality feedback → torch (Android) → annotate (draw, move, resize, label, delete, undo) → list → resize alignment → an error state → upload fallback. Link it in `README.md`
+- [X] T099 (done: https://youtu.be/LJ5oYIeJERw) Record the demo video (manual): capture → quality feedback → torch (Android) → annotate (draw, move, resize, label, delete, undo) → list → resize alignment → an error state → upload fallback. Link it in `README.md`
 
 ---
 
