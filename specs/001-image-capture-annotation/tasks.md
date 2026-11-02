@@ -404,7 +404,7 @@ Documentation and deployment are required deliverables (FR-037–FR-040).
 
   (FR-037)
 - [X] T095 [P] Write `docs/TECHNICAL_NOTES.md`, a brief explanation of the image capture strategy (the constraint ladder, capability upgrade, `takePhoto` vs. canvas fallback, reporting the actual resolution), the quality assessment (the metrics, why these checks, the thresholds, performance), and the annotation approach (the SVG viewBox in image space, Pointer Events, 44 px handles, reducer and undo), each with a short diagram or code reference (FR-038)
-- [ ] T096 Deploy to Vercel: connect the repository or run `npx vercel --prod`, with framework preset Vite and output `dist`. Add a `vercel.json` only if needed. Verify HTTPS camera access on a real phone, and add the public URL to `README.md` (FR-040)
+- [X] T096 Deploy (done on Netlify: https://img-capture-annotation.netlify.app/; originally planned for Vercel): connect the repository or run `npx vercel --prod`, with framework preset Vite and output `dist`. Add a `vercel.json` only if needed. Verify HTTPS camera access on a real phone, and add the public URL to `README.md` (FR-040)
 - [ ] T097 Run the full quickstart.md validation (V1–V17) on the reference devices (Android Chrome, iPhone Safari, laptop) against the deployed URL, plus `npm run lint && npm run typecheck && npm test && npm run test:e2e && npm run build`. Also do the following and record the results:
   - Measure the time from capture until the quality rating appears for a 12 MP photo on a mid-range phone, using the dev timing from T061. It must be ≤ 1 s (SC-008).
   - Time the first-use flow, from opening the app to one labeled box, on a phone and a desktop (≤ 60 s, SC-001).

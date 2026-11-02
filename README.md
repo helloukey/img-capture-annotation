@@ -2,7 +2,7 @@
 
 A React app that captures photos at the highest resolution your device's camera offers, scores their quality, and lets you annotate them with labeled bounding boxes on desktop, tablet, and phone. It handles touch as well as mouse and pen.
 
-**Live demo:** _TODO: add the Netlify or Cloudflare Pages URL after deployment (see [Deployment](#deployment))._
+**Live demo:** https://img-capture-annotation.netlify.app/
 **Demo video:** _TODO: add a link once recorded._
 
 ## Features
@@ -48,7 +48,7 @@ Open the URL on a phone connected to the same Wi-Fi network and accept the certi
 | `npm test` | Vitest unit and component tests (167 tests) |
 | `npm run test:e2e` | Playwright on a real Chromium fake camera, with desktop and Pixel 7 (touch) projects |
 
-The first time you run the e2e tests, install the browser with `npx playwright install chromium`.
+The first time you run the e2e tests, install the browser with `npx playwright install chromium`. To run the suite against a deployed site instead of the local dev server, set `E2E_BASE_URL`, for example `E2E_BASE_URL=https://img-capture-annotation.netlify.app npm run test:e2e`.
 
 ## Architecture
 
