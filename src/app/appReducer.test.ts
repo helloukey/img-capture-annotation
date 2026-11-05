@@ -136,6 +136,14 @@ describe('appReducer', () => {
       expect(appReducer(s, { type: 'UNDO_DELETE_PHOTO', token: 'nope' })).toBe(s);
     });
 
+    it('a pending deletion keeps its bytes counted until it is finalized (US4)', () => {
+      const big = makePhoto({ byteSize: SESSION_MAX_BYTES - 1_000_000 });
+      let s = appReducer(makeAppState([big]), { type: 'DELETE_PHOTO', photoId: big.id, token: 't' });
+      expect(appReducer(s, { type: 'PHOTOS_ADDED', photos: [makePhoto({ byteSize: 2_000_000 })] }).session.photos).toHaveLength(0);
+      s = appReducer(s, { type: 'FINALIZE_DELETE', token: 't' });
+      expect(appReducer(s, { type: 'PHOTOS_ADDED', photos: [makePhoto({ byteSize: 2_000_000 })] }).session.photos).toHaveLength(1);
+    });
+
     it('FINALIZE_DELETE drops the pending entry', () => {
       const [a, b] = [makePhoto(), makePhoto()];
       let s = appReducer(makeAppState([a, b]), { type: 'DELETE_PHOTO', photoId: a.id, token: 't' });

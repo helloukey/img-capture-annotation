@@ -118,3 +118,39 @@ test.describe('US3 per-photo annotation', () => {
     await expect(thumbs.nth(0)).toHaveAccessibleName(/1 annotation/);
   });
 });
+
+test.describe('US4 safe limits', () => {
+  test('bursts fill the session to exactly 20, then the shutter is disabled until photos are deleted', async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop-chrome', 'long flow runs once');
+    test.setTimeout(90_000);
+    await openCamera(page);
+    for (let i = 0; i < 6 && (await stripCount(page)) < 20; i++) {
+      if (i > 0) {
+        await page.getByRole('button', { name: /Add more/ }).click();
+        await expect(page.getByRole('button', { name: 'Capture photo' })).toBeEnabled();
+      }
+      await holdShutter(page, 3400);
+      await expect(page.getByRole('img', { name: 'Your capture' })).toBeVisible();
+    }
+    expect(await stripCount(page)).toBe(20);
+    await expect(page.getByText(/Session full \(20 photos\)/).first()).toBeVisible();
+
+    await page.getByRole('button', { name: /Add more/ }).click();
+    await expect(page.getByRole('button', { name: 'Capture photo' })).toBeDisabled();
+    await expect(page.locator('#session-full-message')).toHaveText(
+      'Session full (20 photos). Delete some photos to take more.',
+    );
+
+    await page.getByRole('button', { name: 'Review photos' }).click();
+    const thumbs = page.getByRole('toolbar', { name: /^Photos/ }).getByRole('button');
+    for (let i = 0; i < 3; i++) {
+      await thumbs.first().focus();
+      await page.keyboard.press('Delete');
+    }
+    await expect.poll(() => stripCount(page)).toBe(17);
+    await page.getByRole('button', { name: /Add more/ }).click();
+    await expect(page.getByRole('button', { name: 'Capture photo' })).toBeEnabled();
+  });
+});

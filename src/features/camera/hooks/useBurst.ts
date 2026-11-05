@@ -139,6 +139,7 @@ export function useBurst(options: UseBurstOptions): UseBurstResult {
       session: () => opts.current.session(),
     };
     const result = await runBurst(env, sig);
+    performance.mark('burst-stopped'); // with 'burst-release': release → stop delay (SC-003)
     signal.current = null;
     photoProcessor.resume();
     setLastStop({ reason: result.stopReason, frames: result.frames.length });
@@ -168,6 +169,7 @@ export function useBurst(options: UseBurstOptions): UseBurstResult {
     (e: PointerEvent<HTMLButtonElement>, kind: 'up' | 'cancel') => {
       if (e.pointerId !== pointerId.current) return; // only the pointer that started the press counts
       pointerId.current = null;
+      performance.mark('burst-release');
       const wasHold = holdTimer.current === null; // the press became a burst
       if (wasHold) suppressGhostClick(e.clientX, e.clientY);
       if (pendingDelivery.current) {

@@ -6,6 +6,7 @@ import type { BurstStopReason } from '@/features/session/lib/burstScheduler';
 import { heldBytes } from '@/features/session/lib/sessionSelectors';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import type { Photo } from '@/shared/types';
+import { Button } from '@/shared/ui/Button';
 import { cn } from '@/shared/ui/cn';
 import { notify } from '@/shared/ui/toast';
 import { useBurst } from '../hooks/useBurst';
@@ -21,7 +22,7 @@ import { TorchToggle } from './TorchToggle';
 
 export function CameraView() {
   const { stateRef } = useApp();
-  const { addPhotos } = useSession();
+  const { addPhotos, fullReason, go } = useSession();
   const camera = useCamera();
   const landscape = useMediaQuery('(orientation: landscape) and (max-height: 600px)');
   const [flashKey, setFlashKey] = useState(0);
@@ -57,6 +58,12 @@ export function CameraView() {
   });
 
   const live = camera.status === 'live' || camera.status === 'capturing';
+  const fullMessage =
+    fullReason === 'count'
+      ? 'Session full (20 photos). Delete some photos to take more.'
+      : fullReason === 'memory'
+        ? 'Memory limit reached. Delete some photos to take more.'
+        : null;
   const bursting = burst.phase === 'running';
   const busyControls = burst.phase !== 'idle';
 
@@ -110,8 +117,9 @@ export function CameraView() {
           <div className="relative">
             <ShutterButton
               handlers={burst.shutterHandlers}
-              disabled={!live}
+              disabled={!live || (fullMessage !== null && burst.phase === 'idle')}
               busy={camera.status === 'capturing'}
+              describedBy={fullMessage ? 'session-full-message' : undefined}
             />
             {bursting && burst.startedAt !== null && (
               <BurstProgress startedAt={burst.startedAt} frames={burst.frameCount} />
@@ -125,6 +133,23 @@ export function CameraView() {
               />
             )}
           </div>
+        </div>
+      )}
+
+      {fullMessage && burst.phase === 'idle' && camera.status !== 'error' && (
+        <div
+          className={cn(
+            'absolute left-1/2 z-10 flex w-[min(92vw,26rem)] -translate-x-1/2 items-center gap-3 rounded-2xl',
+            'border border-border bg-surface-raised/95 p-3 text-sm shadow-xl backdrop-blur',
+            landscape ? 'top-14' : 'bottom-36',
+          )}
+        >
+          <p id="session-full-message" className="flex-1">
+            {fullMessage}
+          </p>
+          <Button variant="secondary" onClick={() => go('review')}>
+            Review photos
+          </Button>
         </div>
       )}
 

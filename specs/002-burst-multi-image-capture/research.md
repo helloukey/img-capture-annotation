@@ -92,6 +92,17 @@ reason, and the alternatives considered.
     frame transferred as an `ImageBitmap` (`createImageBitmap(video)`), which adds complexity for
     little gain at 3 fps. It is recorded as a fallback if profiling shows main-thread jank.
 
+- **Outcome (T047, 2026-11-06)**: Measured with `PERF=1 npm run test:e2e -- perf` (desktop
+  Chromium, Playwright fake camera at 3840 × 2160, 2 s burst, 3 runs):
+  - Longest main-thread task during the burst: **under 50 ms** (no long tasks in 3 runs; one 53 ms
+    task in an earlier run that included opening Review, not the burst itself).
+  - Release to burst stopped: **under 1 ms**.
+  - Photo switch to new image shown: **14–38 ms**.
+
+  The `OffscreenCanvas` worker fallback is therefore **not** needed on desktop. The same
+  measurement on the reference Android phone is still to do (T059), and the fallback stays
+  recorded here in case the phone shows long tasks.
+
 ## R5. Background photo processing (thumbnails and quality)
 
 - **Decision**: A `photoProcessor` service with an external store, read through

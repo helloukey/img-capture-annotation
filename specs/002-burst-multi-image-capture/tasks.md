@@ -266,20 +266,20 @@ and capture works again (quickstart B12–B13).
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T042 [P] [US4] Write `src/features/camera/components/CameraView.limits.test.tsx`:
+- [X] T042 [P] [US4] Write `src/features/camera/components/CameraView.limits.test.tsx`:
   - with a session of 20 photos, the shutter and Burst button are disabled, with the visible text "Session full (20 photos). Delete some photos to take more.";
   - with 18 photos, a burst stops after 2 frames with `session-full` and that toast;
   - with `heldBytes` near 150 MB, a burst stops with `memory-limit`;
   - after a deletion is finalized, the shutter is enabled again.
-- [ ] T043 [P] [US4] Add cases to `src/app/appReducer.test.ts` and `src/features/session/lib/sessionSelectors.test.ts`: pending deletions count toward `heldBytes` until `FINALIZE_DELETE`, and an undo that would exceed 20 photos is refused
+- [X] T043 [P] [US4] Add cases to `src/app/appReducer.test.ts` and `src/features/session/lib/sessionSelectors.test.ts`: pending deletions count toward `heldBytes` until `FINALIZE_DELETE`, and an undo that would exceed 20 photos is refused
 
 ### Implementation for User Story 4
 
-- [ ] T044 [US4] In `src/features/camera/components/CameraView.tsx`, read `isFull` and `fullReason` from `useSession()`. Disable the shutter and Burst button, and show the full-session message ("Session full (20 photos). Delete some photos to take more." for count, "Memory limit reached. Delete some photos to take more." for memory) in a visible banner above the controls, linked with `aria-describedby`. Add a "Review photos" button in the banner → `go('review')`
-- [ ] T045 [US4] In `src/features/camera/hooks/useBurst.ts`, pass `session()` (photo count and `heldBytes` from `useApp()` state, read through a ref so it's fresh) into `BurstEnv`, so `session-full` and `memory-limit` stop mid-burst
-- [ ] T046 [US4] Make sure `useSession().addPhotos` (in `src/app/AppContext.tsx`) applies `admit()`, and returns `{ added, skipped, reason }` that callers turn into a toast whenever photos are skipped
-- [ ] T047 [US4] Profile a burst on the reference Android phone (Chrome DevTools remote debugging → Performance). Record the longest main-thread task during a 3 s burst (SC-003: ≤ 50 ms), the delay from release to the burst stopping (SC-003: ≤ 0.2 s, via `performance.mark` on `pointerup` and on stop), and the photo-switch latency in Review and Annotate (SC-006: ≤ 0.1 s, via `performance.mark` around `select`). If it's over 50 ms, move encoding to `OffscreenCanvas.convertToBlob` with `createImageBitmap(video)` in `src/features/camera/lib/capture.ts` (research R4 fallback). Write the measured numbers into `specs/002-burst-multi-image-capture/research.md` under R4 as "Outcome"
-- [ ] T048 [US4] Extend `tests/e2e/burst.spec.ts` (part 4): run bursts until the session is full (desktop project, using repeated holds), assert the disabled shutter and banner text, delete 3 photos via the strip, and assert the shutter is enabled again
+- [X] T044 [US4] In `src/features/camera/components/CameraView.tsx`, read `isFull` and `fullReason` from `useSession()`. Disable the shutter and Burst button, and show the full-session message ("Session full (20 photos). Delete some photos to take more." for count, "Memory limit reached. Delete some photos to take more." for memory) in a visible banner above the controls, linked with `aria-describedby`. Add a "Review photos" button in the banner → `go('review')`
+- [X] T045 [US4] In `src/features/camera/hooks/useBurst.ts`, pass `session()` (photo count and `heldBytes` from `useApp()` state, read through a ref so it's fresh) into `BurstEnv`, so `session-full` and `memory-limit` stop mid-burst
+- [X] T046 [US4] Make sure `useSession().addPhotos` (in `src/app/AppContext.tsx`) applies `admit()`, and returns `{ added, skipped, reason }` that callers turn into a toast whenever photos are skipped
+- [X] T047 [US4] (desktop Chromium measured via `tests/e2e/perf.spec.ts`, see research R4 Outcome; the phone measurement is pending in T059) Profile a burst on the reference Android phone (Chrome DevTools remote debugging → Performance). Record the longest main-thread task during a 3 s burst (SC-003: ≤ 50 ms), the delay from release to the burst stopping (SC-003: ≤ 0.2 s, via `performance.mark` on `pointerup` and on stop), and the photo-switch latency in Review and Annotate (SC-006: ≤ 0.1 s, via `performance.mark` around `select`). If it's over 50 ms, move encoding to `OffscreenCanvas.convertToBlob` with `createImageBitmap(video)` in `src/features/camera/lib/capture.ts` (research R4 fallback). Write the measured numbers into `specs/002-burst-multi-image-capture/research.md` under R4 as "Outcome"
+- [X] T048 [US4] Extend `tests/e2e/burst.spec.ts` (part 4): run bursts until the session is full (desktop project, using repeated holds), assert the disabled shutter and banner text, delete 3 photos via the strip, and assert the shutter is enabled again
 
 **Checkpoint**: All P1 stories complete.
 
