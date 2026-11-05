@@ -58,9 +58,11 @@ export function buildExport(
   };
 }
 
-export function exportFileName(image: CapturedImage, ext: 'json' | 'jpg'): string {
+/** `photoIndex` (1-based) is added in multi-photo sessions so exports don't overwrite each other. */
+export function exportFileName(image: CapturedImage, ext: 'json' | 'jpg', photoIndex?: number): string {
   const stamp = new Date(image.capturedAt).toISOString().slice(0, 19).replace(/:/g, '-');
-  return `${ext === 'json' ? 'annotations' : 'annotated'}-${stamp}.${ext}`;
+  const suffix = photoIndex ? `-photo${photoIndex}` : '';
+  return `${ext === 'json' ? 'annotations' : 'annotated'}-${stamp}${suffix}.${ext}`;
 }
 
 export function downloadBlob(blob: Blob, fileName: string): void {

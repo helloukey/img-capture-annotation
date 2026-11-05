@@ -234,7 +234,7 @@ counts 2 and 1 with correct alignment (quickstart B10–B11).
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T038 [P] [US3] Write `src/features/annotation/components/AnnotateView.multi.test.tsx`, under `AppProvider` with photos A (4000×3000) and B (1920×1080), with `getBoundingClientRect` stubbed as in `AnnotationCanvas.test.tsx`:
+- [X] T038 [P] [US3] Write `src/features/annotation/components/AnnotateView.multi.test.tsx`, under `AppProvider` with photos A (4000×3000) and B (1920×1080), with `getBoundingClientRect` stubbed as in `AnnotationCanvas.test.tsx`:
   - draw 2 boxes on A, select B in the strip, draw 1 box on B, select A again;
   - A shows exactly its 2 boxes with the same image-pixel rects, and B has 1;
   - the strip badges show 2 and 1;
@@ -245,12 +245,12 @@ counts 2 and 1 with correct alignment (quickstart B10–B11).
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Update `src/features/annotation/components/AnnotateView.tsx`:
+- [X] T039 [US3] Update `src/features/annotation/components/AnnotateView.tsx`:
   - Render `PhotoStrip` (horizontal, under the toolbar) with `annotationCount`s, `select` and `onDelete`. Deleting uses the same confirm-if-annotated, then `deletePhoto`, flow as Review (T035; US3-7, FR-018). Afterwards the view moves to the neighbouring photo.
   - Key `<AnnotationCanvas key={selected.id} image={selected}>` and `LabelEditor`.
   - Retake becomes "Start over" when there are several photos (**always** confirmed, as in T034) and stays feature 001's Retake (→ `deletePhoto`) for one photo.
-- [ ] T040 [US3] Make sure `src/features/annotation/components/AnnotationList.tsx` and `src/features/annotation/components/ExportMenu.tsx` read only the current photo's slice through `useAnnotations()`, and that the list header reads "{n} annotations on this photo" when the session has more than one photo. Export file names gain a `-photo{index}` suffix in multi-photo sessions, in `src/features/annotation/lib/exportAnnotations.ts` `exportFileName`
-- [ ] T041 [US3] Extend `tests/e2e/burst.spec.ts` (part 3): from a burst, annotate photos 1 and 2 with different labels, switch between them, resize the viewport, and assert each photo shows only its own label, with boxes within 1% alignment (reuse `fractions()` from `tests/e2e/alignment.spec.ts`, moved into `tests/e2e/helpers.ts`)
+- [X] T040 [US3] Make sure `src/features/annotation/components/AnnotationList.tsx` and `src/features/annotation/components/ExportMenu.tsx` read only the current photo's slice through `useAnnotations()`, and that the list header reads "{n} annotations on this photo" when the session has more than one photo. Export file names gain a `-photo{index}` suffix in multi-photo sessions, in `src/features/annotation/lib/exportAnnotations.ts` `exportFileName`
+- [X] T041 [US3] Extend `tests/e2e/burst.spec.ts` (part 3): from a burst, annotate photos 1 and 2 with different labels, switch between them, resize the viewport, and assert each photo shows only its own label, with boxes within 1% alignment (reuse `fractions()` from `tests/e2e/alignment.spec.ts`, moved into `tests/e2e/helpers.ts`)
 
 **Checkpoint**: Per-photo annotation complete. All P1 behavior except the session-limit UX is done.
 

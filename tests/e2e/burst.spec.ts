@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { holdShutter, openCamera, stripCount } from './helpers';
+import { dragOn, fractions, holdShutter, openCamera, stripCount, surfacePoint } from './helpers';
 
 test.describe('US1 hold-to-burst', () => {
   test('holding the shutter takes several full-stream-resolution photos', async ({ page }) => {
@@ -79,5 +79,42 @@ test.describe('US2 review and delete', () => {
     await page.getByRole('button', { name: 'Capture photo' }).click();
     await expect(page.getByRole('img', { name: 'Your capture' })).toBeVisible();
     await expect.poll(() => stripCount(page)).toBe(start);
+  });
+});
+
+test.describe('US3 per-photo annotation', () => {
+  test('each burst photo keeps its own labelled, aligned boxes', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop-chrome', 'viewport sweep runs once');
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openCamera(page);
+    await holdShutter(page, 1000);
+    await expect.poll(() => stripCount(page)).toBeGreaterThanOrEqual(2);
+    await page.getByRole('button', { name: /Continue to annotate/ }).click();
+
+    const thumbs = page.getByRole('toolbar', { name: /^Photos/ }).getByRole('button');
+    const label = page.getByRole('textbox', { name: 'Label', exact: true });
+
+    await dragOn(page, await surfacePoint(page, 0.2, 0.2), await surfacePoint(page, 0.5, 0.6));
+    await label.fill('First');
+    await label.press('Enter');
+    const first = await fractions(page);
+
+    await thumbs.nth(1).click();
+    await expect(page.getByRole('button', { name: /^Annotation / })).toHaveCount(0);
+    await dragOn(page, await surfacePoint(page, 0.55, 0.3), await surfacePoint(page, 0.85, 0.8));
+    await label.fill('Second');
+    await label.press('Enter');
+
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await thumbs.nth(0).click();
+    await expect(page.getByRole('button', { name: 'Annotation First' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Annotation Second' })).toHaveCount(0);
+    const now = await fractions(page);
+    for (const k of ['x', 'y', 'w', 'h'] as const) expect(Math.abs(now[k] - first[k])).toBeLessThan(0.01);
+
+    await thumbs.nth(1).click();
+    await expect(page.getByRole('button', { name: 'Annotation Second' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Annotation First' })).toHaveCount(0);
+    await expect(thumbs.nth(0)).toHaveAccessibleName(/1 annotation/);
   });
 });

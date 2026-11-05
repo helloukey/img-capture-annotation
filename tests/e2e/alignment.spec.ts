@@ -1,19 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { captureToAnnotate, dragOn, surfacePoint } from './helpers';
-
-/** The box's position and size as fractions of the rendered image. */
-async function fractions(page: Page) {
-  return page.evaluate(() => {
-    const img = document.querySelector('[data-testid="annotation-stage"] img')!.getBoundingClientRect();
-    const box = document.querySelector('[data-annotation-id] rect')!.getBoundingClientRect();
-    return {
-      x: (box.left - img.left) / img.width,
-      y: (box.top - img.top) / img.height,
-      w: box.width / img.width,
-      h: box.height / img.height,
-    };
-  });
-}
+import { expect, test } from '@playwright/test';
+import { captureToAnnotate, dragOn, fractions, surfacePoint } from './helpers';
 
 test('boxes stay aligned with the image across viewport sizes and orientations (US3, SC-003)', async ({
   page,

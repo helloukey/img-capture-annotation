@@ -96,3 +96,17 @@ export async function stripCount(page: Page): Promise<number> {
     return (await page.getByRole('img', { name: 'Your capture' }).count()) ? 1 : 0;
   return Number((await strip.getAttribute('aria-label'))!.match(/\((\d+)\)/)![1]);
 }
+
+/** The first box's position and size as fractions of the rendered image (alignment checks). */
+export async function fractions(page: Page) {
+  return page.evaluate(() => {
+    const img = document.querySelector('[data-testid="annotation-stage"] img')!.getBoundingClientRect();
+    const box = document.querySelector('[data-annotation-id] rect')!.getBoundingClientRect();
+    return {
+      x: (box.left - img.left) / img.width,
+      y: (box.top - img.top) / img.height,
+      w: box.width / img.width,
+      h: box.height / img.height,
+    };
+  });
+}
