@@ -36,4 +36,15 @@ describe('fileToCapturedImage', () => {
     expect(err).toBeInstanceOf(UploadError);
     expect((err as UploadError).message).toMatch(/couldn.t be opened/i);
   });
+
+  it('tells a non-image apart from an unreadable image', async () => {
+    const notImage = await fileToCapturedImage(new File(['hi'], 'notes.txt', { type: 'text/plain' })).catch(
+      (e: UploadError) => e,
+    );
+    const unreadable = await fileToCapturedImage(asFile(brokenImageBlob(), 'broken.jpg')).catch(
+      (e: UploadError) => e,
+    );
+    expect((notImage as UploadError).kind).toBe('not-image');
+    expect((unreadable as UploadError).kind).toBe('unreadable');
+  });
 });

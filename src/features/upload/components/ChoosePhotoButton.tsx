@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
-import { useSession } from '@/app/AppContext';
+import { useApp, useSession } from '@/app/AppContext';
 import { Button, type ButtonVariant } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
 import { ImageUp, LoaderCircle } from '@/shared/ui/icons';
 import { notify } from '@/shared/ui/toast';
-import { fileToCapturedImage, UploadError } from '../lib/fileToCapturedImage';
+import { fileToCapturedImage } from '../lib/fileToCapturedImage';
+import { importPhotos, importSummary } from '../lib/importPhotos';
 
 export interface ChoosePhotoButtonProps {
   label?: string;
@@ -22,17 +23,21 @@ export function ChoosePhotoButton({
   className,
 }: ChoosePhotoButtonProps) {
   const { addPhotos } = useSession();
+  const { stateRef } = useApp();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
-  const onFile = async (file: File | undefined) => {
-    if (!file) return;
+  const onFiles = async (list: FileList | null) => {
+    const files = list ? Array.from(list) : [];
+    if (!files.length) return;
     setBusy(true);
     try {
-      const image = await fileToCapturedImage(file);
-      addPhotos([image]);
-    } catch (err) {
-      notify.error(err instanceof UploadError ? err.message : 'That file couldn’t be opened as an image.');
+      const { photos, skipped } = await importPhotos(files, stateRef.current.session, fileToCapturedImage);
+      const result = addPhotos(photos);
+      skipped.sessionFull += result.reason === 'count' ? result.skipped : 0;
+      skipped.memory += result.reason === 'memory' ? result.skipped : 0;
+      const summary = importSummary(result.added, skipped);
+      if (summary) (result.added ? notify.info : notify.error)(summary);
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
@@ -45,11 +50,12 @@ export function ChoosePhotoButton({
         ref={input}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
         data-testid="choose-photo-input"
         aria-hidden
         tabIndex={-1}
-        onChange={(e) => void onFile(e.target.files?.[0])}
+        onChange={(e) => void onFiles(e.target.files)}
       />
       {iconOnly ? (
         <IconButton

@@ -307,8 +307,8 @@ mid-burst and it stops early (quickstart B14).
 **Independent Test**: Choose 4 images and 1 PDF; 4 are added and the toast says "1 skipped: not an
 image" (quickstart B15).
 
-- [ ] T052 [P] [US6] Update `src/features/upload/lib/fileToCapturedImage.test.ts` and add `src/features/upload/components/ChoosePhotoButton.test.tsx`: several files are processed in order; non-images and undecodable files are skipped with reasons; files beyond the session or memory limits are skipped as "session full"; and a single summary toast is shown
-- [ ] T053 [US6] Update `src/features/upload/components/ChoosePhotoButton.tsx`: `multiple` on the input; process files sequentially via `fileToCapturedImage`; check `admit()` before each; call `addPhotos` once with every accepted photo; show one `notify.info` / `notify.error` summary ("4 added · 1 skipped: not an image · 2 skipped: session full")
+- [X] T052 [P] [US6] Update `src/features/upload/lib/fileToCapturedImage.test.ts` and add `src/features/upload/components/ChoosePhotoButton.test.tsx`: several files are processed in order; non-images and undecodable files are skipped with reasons; files beyond the session or memory limits are skipped as "session full"; and a single summary toast is shown
+- [X] T053 [US6] Update `src/features/upload/components/ChoosePhotoButton.tsx`: `multiple` on the input; process files sequentially via `fileToCapturedImage`; check `admit()` before each; call `addPhotos` once with every accepted photo; show one `notify.info` / `notify.error` summary ("4 added · 1 skipped: not an image · 2 skipped: session full")
 
 ---
 
