@@ -1,14 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppFlowProvider } from '@/app/AppFlowContext';
-import type { CapturedImage } from '@/shared/types';
+import { AppProvider } from '@/app/AppContext';
+import { makeAppState, makePhoto } from '../../../../tests/fakes/appState';
 import { Toaster } from '@/shared/ui/Toaster';
 import { AnnotationProvider } from '../state/AnnotationProvider';
 import { AnnotateView } from './AnnotateView';
 
 // 4000×3000 photo displayed at 400×300 → 0.1 CSS px per image px; min box = 24 CSS px = 240 image px.
-const image = { id: 'img', objectUrl: 'blob:img', width: 4000, height: 3000 } as CapturedImage;
+const image = makePhoto({ id: 'img', objectUrl: 'blob:img', width: 4000, height: 3000 });
 const DISPLAY = { left: 0, top: 0, width: 400, height: 300 };
 
 beforeEach(() => {
@@ -30,12 +30,12 @@ beforeEach(() => {
 
 function renderAnnotate() {
   render(
-    <AppFlowProvider initialState={{ step: 'annotate', image, pendingConfirm: null, annotationCount: 0 }}>
-      <AnnotationProvider imageId={image.id}>
+    <AppProvider initialState={makeAppState([image], { step: 'annotate' })}>
+      <AnnotationProvider>
         <AnnotateView image={image} />
       </AnnotationProvider>
       <Toaster />
-    </AppFlowProvider>,
+    </AppProvider>,
   );
   return screen.getByTestId('annotation-surface');
 }

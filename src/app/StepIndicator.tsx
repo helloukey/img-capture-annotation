@@ -1,5 +1,5 @@
 import { cn } from '@/shared/ui/cn';
-import type { AppStep } from './appFlowReducer';
+import type { AppStep } from './appReducer';
 
 const STEPS: { id: AppStep; label: string }[] = [
   { id: 'camera', label: 'Capture' },

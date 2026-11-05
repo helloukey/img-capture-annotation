@@ -16,7 +16,7 @@ export interface Rect {
 }
 
 export type ImageSource = 'camera' | 'upload';
-export type CaptureMethod = 'image-capture' | 'canvas' | 'file';
+export type CaptureMethod = 'image-capture' | 'canvas' | 'file' | 'burst';
 
 /**
  * The single photo being worked on (data-model.md §1). Immutable once created.
@@ -35,6 +35,13 @@ export interface CapturedImage {
   captureMethod: CaptureMethod;
   capturedAt: number;
   cameraLabel?: string;
+  /** Shared by every photo taken in one burst. */
+  burstId?: string;
+  /** 1-based position within its burst. */
+  burstIndex?: number;
   /** Whether the capturing camera supported torch control (drives the brightness tip). */
   torchAvailable?: boolean;
 }
+
+/** One photo in a multi-image session (feature 002). */
+export type Photo = CapturedImage;

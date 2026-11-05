@@ -4,10 +4,11 @@ import { displayName, type Annotation } from '../lib/annotationReducer';
 import type { Rect } from '../lib/geometry';
 import { useAnnotationContext } from '../state/AnnotationProvider';
 
-export const UNDO_WINDOW_MS = 5000;
+export { UNDO_WINDOW_MS } from '@/features/session/lib/limits';
+import { UNDO_WINDOW_MS } from '@/features/session/lib/limits';
 
 export function useAnnotations() {
-  const { state, dispatch } = useAnnotationContext();
+  const { state, dispatch, photoId, dispatchTo } = useAnnotationContext();
 
   const selected = useMemo<Annotation | null>(
     () => state.items.find((a) => a.id === state.selectedId) ?? null,
@@ -26,13 +27,17 @@ export function useAnnotations() {
     [dispatch],
   );
 
+  /** Undo targets the photo the annotation was deleted from, even after switching photos (FR-025). */
   const offerUndo = useCallback(
-    (message: string, token: string) =>
-      notify.undo(message, () => dispatch({ type: 'UNDO_DELETE', token }), {
+    (message: string, token: string) => {
+      const owner = photoId;
+      if (!owner) return;
+      notify.undo(message, () => dispatchTo(owner, { type: 'UNDO_DELETE', token }), {
         durationMs: UNDO_WINDOW_MS,
-        onDismiss: () => dispatch({ type: 'DISMISS_UNDO', token }),
-      }),
-    [dispatch],
+        onDismiss: () => dispatchTo(owner, { type: 'DISMISS_UNDO', token }),
+      });
+    },
+    [photoId, dispatchTo],
   );
 
   /** Deletes with a 5 s Undo toast (FR-026). */

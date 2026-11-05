@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useSession } from '@/app/AppContext';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import { cn } from '@/shared/ui/cn';
 import { notify } from '@/shared/ui/toast';
@@ -14,7 +14,7 @@ import { ShutterButton } from './ShutterButton';
 import { SwitchCameraButton } from './SwitchCameraButton';
 
 export function CameraView() {
-  const { dispatch } = useAppFlow();
+  const { addPhotos } = useSession();
   const camera = useCamera();
   const landscape = useMediaQuery('(orientation: landscape) and (max-height: 600px)');
   const [flashKey, setFlashKey] = useState(0);
@@ -27,7 +27,7 @@ export function CameraView() {
     setFlashKey((k) => k + 1);
     try {
       const image = await camera.capture();
-      dispatch({ type: 'CAPTURED', image: { ...image, torchAvailable: torchSupported.current } });
+      addPhotos([{ ...image, torchAvailable: torchSupported.current }]);
     } catch {
       notify.error('Couldn’t take the photo', 'Please try again.');
     }

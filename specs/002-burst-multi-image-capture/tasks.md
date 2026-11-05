@@ -34,9 +34,9 @@ Write each story's tests first and confirm they fail. **Every feature 001 test m
 
 **Purpose**: Constants and folders for the new `session` feature
 
-- [ ] T001 Create the folders `src/features/session/{lib,hooks,components}`. Confirm the existing ESLint rule (`src/features/*/lib/**` cannot import React) applies to `src/features/session/lib` by running `npm run lint`
-- [ ] T002 Create `src/features/session/lib/limits.ts` with the constants from data-model.md §1, verbatim: `TAP_THRESHOLD_MS = 300`, `BURST_INTERVAL_MS = 333`, `BURST_MAX_MS = 3000`, `BURST_MAX_FRAMES = 10`, `SESSION_MAX_PHOTOS = 20`, `SESSION_MAX_BYTES = 150_000_000`, `FIRST_FRAME_ESTIMATE_BYTES = 4_000_000`, `THUMBNAIL_LONG_SIDE = 160`. Re-export `UNDO_WINDOW_MS` (5000) from `src/features/annotation/hooks/useAnnotations.ts`, or move it here and import it there. Add a doc comment citing constitution Principle VIII
-- [ ] T003 Extend the `CapturedImage` type in `src/shared/types.ts`: `captureMethod` becomes `"image-capture" | "canvas" | "file" | "burst"`, plus the optional fields `burstId?: string` and `burstIndex?: number` ("1-based position within the burst"). Export `type Photo = CapturedImage`
+- [X] T001 Create the folders `src/features/session/{lib,hooks,components}`. Confirm the existing ESLint rule (`src/features/*/lib/**` cannot import React) applies to `src/features/session/lib` by running `npm run lint`
+- [X] T002 Create `src/features/session/lib/limits.ts` with the constants from data-model.md §1, verbatim: `TAP_THRESHOLD_MS = 300`, `BURST_INTERVAL_MS = 333`, `BURST_MAX_MS = 3000`, `BURST_MAX_FRAMES = 10`, `SESSION_MAX_PHOTOS = 20`, `SESSION_MAX_BYTES = 150_000_000`, `FIRST_FRAME_ESTIMATE_BYTES = 4_000_000`, `THUMBNAIL_LONG_SIDE = 160`. Re-export `UNDO_WINDOW_MS` (5000) from `src/features/annotation/hooks/useAnnotations.ts`, or move it here and import it there. Add a doc comment citing constitution Principle VIII
+- [X] T003 Extend the `CapturedImage` type in `src/shared/types.ts`: `captureMethod` becomes `"image-capture" | "canvas" | "file" | "burst"`, plus the optional fields `burstId?: string` and `burstIndex?: number` ("1-based position within the burst"). Export `type Photo = CapturedImage`
 
 ---
 
@@ -50,7 +50,7 @@ is green again.
 
 ### Tests (write first)
 
-- [ ] T004 [P] Write `src/app/appReducer.test.ts`, covering every rule in contracts/session-store.md:
+- [X] T004 [P] Write `src/app/appReducer.test.ts`, covering every rule in contracts/session-store.md:
   - `PHOTOS_ADDED`: appends, selects the first new photo, sets step to `review`, gives each photo an empty annotation entry, caps at `SESSION_MAX_PHOTOS` and at `SESSION_MAX_BYTES` (against held bytes), and returns the same state for an empty list.
   - `SELECT`.
   - `DELETE_PHOTO`: moves the photo to `pending` with its annotations and index; selects the next photo, or the previous if it was last; with no photos left, step becomes `camera` and `selectedId` becomes `null`.
@@ -59,8 +59,8 @@ is green again.
   - `START_OVER` and `RESET`, both returning the initial state.
   - `GO`: `review` and `annotate` are refused with no photos; `camera` is always allowed and keeps the session.
   - `ANNOTATION`: routes to the correct photo, an unknown id is a no-op, and an unchanged slice returns the same object.
-- [ ] T005 [P] Write `src/features/session/lib/sessionSelectors.test.ts`, covering: `heldBytes` (live photos plus pending deletions), `fullReason` (`'count'` at 20 photos, `'memory'` at 150 MB, otherwise null), `annotationCount`, `totalAnnotations`, `selectedPhoto`, and `admit()` returning accepted, rejected and reason when the count or memory would be exceeded
-- [ ] T006 [P] Write `src/features/session/lib/photoProcessor.test.ts` with fake `decode`, `analyze`, `thumbnail` and `schedule`, covering guarantees 1–6 of contracts/photo-processing-and-strip.md:
+- [X] T005 [P] Write `src/features/session/lib/sessionSelectors.test.ts`, covering: `heldBytes` (live photos plus pending deletions), `fullReason` (`'count'` at 20 photos, `'memory'` at 150 MB, otherwise null), `annotationCount`, `totalAnnotations`, `selectedPhoto`, and `admit()` returning accepted, rejected and reason when the count or memory would be exceeded
+- [X] T006 [P] Write `src/features/session/lib/photoProcessor.test.ts` with fake `decode`, `analyze`, `thumbnail` and `schedule`, covering guarantees 1–6 of contracts/photo-processing-and-strip.md:
   - one job at a time;
   - the prioritized photo first, then capture order;
   - no new job after `pause()` until `resume()`;
@@ -68,7 +68,7 @@ is green again.
   - `release(id)` revoking the thumbnail URL and discarding a running job's result;
   - `releaseAll()`;
   - a decode error giving `status: 'error'`.
-- [ ] T007 [P] Write `src/features/session/components/PhotoStrip.test.tsx`, covering:
+- [X] T007 [P] Write `src/features/session/components/PhotoStrip.test.tsx`, covering:
   - it renders nothing for fewer than 2 photos;
   - each item has `aria-pressed`, with the accessible name "Photo {i} of {n}, {verdict ?? 'quality pending'}, {k} annotation(s)";
   - ←/→ arrows move focus with a roving tabindex;
@@ -79,19 +79,19 @@ is green again.
 
 ### Implementation
 
-- [ ] T008 Implement `src/features/session/lib/sessionSelectors.ts`: `selectedPhoto`, `heldBytes`, `fullReason`, `annotationCount`, `totalAnnotations`, `remainingSlots` and `admit()`, per data-model.md §3 and contracts/session-store.md. No React imports
-- [ ] T009 Implement `src/app/appReducer.ts`, replacing `src/app/appFlowReducer.ts`:
+- [X] T008 Implement `src/features/session/lib/sessionSelectors.ts`: `selectedPhoto`, `heldBytes`, `fullReason`, `annotationCount`, `totalAnnotations`, `remainingSlots` and `admit()`, per data-model.md §3 and contracts/session-store.md. No React imports
+- [X] T009 Implement `src/app/appReducer.ts`, replacing `src/app/appFlowReducer.ts`:
   - `AppState { step; session: { photos; selectedId; annotations: Record<photoId, AnnotationState>; pending: Record<token, PendingDeletion> } }`, the `AppAction` union from contracts/session-store.md, and `initialAppState`.
   - Route `ANNOTATION` to the unchanged `annotationReducer` from `src/features/annotation/lib/annotationReducer.ts`.
   - Enforce the invariants in data-model.md §4.
   - Delete `src/app/appFlowReducer.ts` and `src/app/appFlowReducer.test.ts` once T004 passes.
-- [ ] T010 Implement `src/features/session/lib/photoProcessor.ts`, `createPhotoProcessor(deps)`, per contracts/photo-processing-and-strip.md: a FIFO queue with `prioritize`, `pause`/`resume`, `release`/`releaseAll` and an external store (`get`, `subscribe`). Export the default singleton `photoProcessor` wired with real dependencies from T011
-- [ ] T011 Refactor `src/features/quality/lib/measure.ts`:
+- [X] T010 Implement `src/features/session/lib/photoProcessor.ts`, `createPhotoProcessor(deps)`, per contracts/photo-processing-and-strip.md: a FIFO queue with `prioritize`, `pause`/`resume`, `release`/`releaseAll` and an external store (`get`, `subscribe`). Export the default singleton `photoProcessor` wired with real dependencies from T011
+- [X] T011 Refactor `src/features/quality/lib/measure.ts`:
   - Extract `analyzeSource(source, w, h)`, which returns `{ brightnessPct, sharpness }` using the existing 512 px high-quality downscale.
   - Add `renderThumbnail(source, w, h)` (`THUMBNAIL_LONG_SIDE` = 160 px, JPEG 0.8, via `toBlob`) and `decodeForProcessing(blob)` (`createImageBitmap` with orientation from the image, falling back to `<img>.decode()`, returning `{ source, width, height, close }`).
   - Keep `measureImage(image)` working by composing these, so feature 001 callers and tests still pass.
-- [ ] T012 Implement `src/features/session/hooks/usePhotoInfo.ts` (`useSyncExternalStore` over `photoProcessor`). Rewrite `src/features/quality/hooks/useQualityAssessment.ts` to read metrics from `photoProcessor.get(image.id)`: return pending while queued or processing, ready via `assessQuality`, and handle a decode error as missing metrics, matching feature 001. Remove its old module-level cache
-- [ ] T013 Implement `src/app/AppContext.tsx`, replacing `src/app/AppFlowContext.tsx`:
+- [X] T012 Implement `src/features/session/hooks/usePhotoInfo.ts` (`useSyncExternalStore` over `photoProcessor`). Rewrite `src/features/quality/hooks/useQualityAssessment.ts` to read metrics from `photoProcessor.get(image.id)`: return pending while queued or processing, ready via `assessQuality`, and handle a decode error as missing metrics, matching feature 001. Remove its old module-level cache
+- [X] T013 Implement `src/app/AppContext.tsx`, replacing `src/app/AppFlowContext.tsx`:
   - `AppProvider` (optional `initialState` for tests), `useApp()` and `useSession()`, per contracts/session-store.md.
   - `addPhotos` uses `admit()`, dispatches `PHOTOS_ADDED`, and calls `photoProcessor.enqueue(added)`.
   - `deletePhoto` dispatches `DELETE_PHOTO` with a `crypto.randomUUID()` token and calls `notify.undo(…, { durationMs: UNDO_WINDOW_MS })`. Undo dispatches `UNDO_DELETE_PHOTO`, or shows `notify.error('Session is full — delete a photo first')` if refused. Dismiss dispatches `FINALIZE_DELETE` and then revokes `photo.objectUrl` and calls `photoProcessor.release(id)`.
@@ -99,23 +99,23 @@ is green again.
   - `go`.
   - On `selectedId` change, call `photoProcessor.prioritize`. On unmount, release everything.
   - Delete `AppFlowContext.tsx`.
-- [ ] T014 Rewrite `src/features/annotation/state/AnnotationProvider.tsx` as a no-prop adapter, per contracts/session-store.md. It reads `session.annotations[selectedId]` from `useApp()`. Its `dispatch(a)` becomes `appDispatch({ type: 'ANNOTATION', photoId: <selectedId captured at call time>, action: a })`. Remove the `imageId`, `onCountChange` and `initialState` props
-- [ ] T015 Update `src/features/annotation/hooks/useAnnotations.ts` so `deleteWithUndo` and `clearAllWithUndo` capture the current `photoId`, and their Undo and dismiss callbacks dispatch `{ type: 'ANNOTATION', photoId, action: UNDO_DELETE | DISMISS_UNDO }` to that photo (FR-025). Expose the same API as before
-- [ ] T016 Migrate every importer of the old flow (`src/app/StepIndicator.tsx`, `src/features/camera/components/CameraView.tsx`, `src/features/review/components/ReviewView.tsx`, `src/features/annotation/components/AnnotateView.tsx`, `src/features/upload/components/ChoosePhotoButton.tsx`), mapping the old actions:
+- [X] T014 Rewrite `src/features/annotation/state/AnnotationProvider.tsx` as a no-prop adapter, per contracts/session-store.md. It reads `session.annotations[selectedId]` from `useApp()`. Its `dispatch(a)` becomes `appDispatch({ type: 'ANNOTATION', photoId: <selectedId captured at call time>, action: a })`. Remove the `imageId`, `onCountChange` and `initialState` props
+- [X] T015 Update `src/features/annotation/hooks/useAnnotations.ts` so `deleteWithUndo` and `clearAllWithUndo` capture the current `photoId`, and their Undo and dismiss callbacks dispatch `{ type: 'ANNOTATION', photoId, action: UNDO_DELETE | DISMISS_UNDO }` to that photo (FR-025). Expose the same API as before
+- [X] T016 Migrate every importer of the old flow (`src/app/StepIndicator.tsx`, `src/features/camera/components/CameraView.tsx`, `src/features/review/components/ReviewView.tsx`, `src/features/annotation/components/AnnotateView.tsx`, `src/features/upload/components/ChoosePhotoButton.tsx`), mapping the old actions:
   - `CAPTURED` / `UPLOADED` → `useSession().addPhotos([image])`
   - `ACCEPT` → `go('annotate')`
   - `BACK_TO_REVIEW` → `go('review')`
   - `RETAKE` of a single photo → `deletePhoto(selected.id)`
   - `RESET` → `startOver()`
   - The old `pendingConfirm` and `CONFIRM`/`CANCEL` are replaced by local `ConfirmDialog` state in the component that needs it.
-- [ ] T017 Update `src/app/App.tsx`:
+- [X] T017 Update `src/app/App.tsx`:
   - `AppProvider` wraps **all** steps.
   - Review and annotate render inside `<AnnotationProvider>` (the T014 adapter, no key/props).
   - Each step keeps its own `ErrorBoundary` (`onReset` → `startOver`).
   - Step choice and the selected photo come from `useApp()`.
-- [ ] T018 Update `src/app/screens.tsx`: `ReviewScreen` and `AnnotateScreen` read `selectedPhoto` from `useSession()` instead of an `image` prop, and pass it to `ReviewView` / `AnnotateView` and to `useQualityAssessment`
-- [ ] T019 [P] Implement `src/features/session/components/PhotoThumb.tsx` (a thumbnail `<img>` from `usePhotoInfo(id).thumbnailUrl`, or a skeleton; a quality dot when ready; an annotation-count badge; a burst marker; at least 56×56 CSS px) and `src/features/session/components/PhotoStrip.tsx` (props per contract; horizontal or vertical; roving tabindex; hidden for fewer than 2 photos; `scrollIntoView({ block: 'nearest', inline: 'nearest' })` on the selected item). Icons come from `src/shared/ui/icons.ts`
-- [ ] T020 Update the feature 001 tests that assumed the old flow: `src/app/App.test.tsx`, `src/features/review/components/ReviewView.test.tsx`, `src/features/camera/components/CameraView.test.tsx`, `src/features/annotation/components/AnnotationCanvas.test.tsx` and `src/features/annotation/components/AnnotationList.test.tsx`. They should render under `AppProvider` with a one-photo `initialState` (helper `tests/fakes/appState.ts`, which builds a session from photos and optional annotations). Then run `npm run lint && npm run typecheck && npm test && npm run test:e2e`. **Everything from feature 001 must be green.**
+- [X] T018 Update `src/app/screens.tsx`: `ReviewScreen` and `AnnotateScreen` read `selectedPhoto` from `useSession()` instead of an `image` prop, and pass it to `ReviewView` / `AnnotateView` and to `useQualityAssessment`
+- [X] T019 [P] Implement `src/features/session/components/PhotoThumb.tsx` (a thumbnail `<img>` from `usePhotoInfo(id).thumbnailUrl`, or a skeleton; a quality dot when ready; an annotation-count badge; a burst marker; at least 56×56 CSS px) and `src/features/session/components/PhotoStrip.tsx` (props per contract; horizontal or vertical; roving tabindex; hidden for fewer than 2 photos; `scrollIntoView({ block: 'nearest', inline: 'nearest' })` on the selected item). Icons come from `src/shared/ui/icons.ts`
+- [X] T020 Update the feature 001 tests that assumed the old flow: `src/app/App.test.tsx`, `src/features/review/components/ReviewView.test.tsx`, `src/features/camera/components/CameraView.test.tsx`, `src/features/annotation/components/AnnotationCanvas.test.tsx` and `src/features/annotation/components/AnnotationList.test.tsx`. They should render under `AppProvider` with a one-photo `initialState` (helper `tests/fakes/appState.ts`, which builds a session from photos and optional annotations). Then run `npm run lint && npm run typecheck && npm test && npm run test:e2e`. **Everything from feature 001 must be green.**
 
 **Checkpoint**: The app behaves exactly like feature 001, now backed by a session store. Single
 captures work end to end.

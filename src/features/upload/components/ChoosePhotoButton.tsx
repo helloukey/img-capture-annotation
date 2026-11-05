@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useSession } from '@/app/AppContext';
 import { Button, type ButtonVariant } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
 import { ImageUp, LoaderCircle } from '@/shared/ui/icons';
@@ -21,7 +21,7 @@ export function ChoosePhotoButton({
   variant = 'secondary',
   className,
 }: ChoosePhotoButtonProps) {
-  const { dispatch } = useAppFlow();
+  const { addPhotos } = useSession();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,7 +30,7 @@ export function ChoosePhotoButton({
     setBusy(true);
     try {
       const image = await fileToCapturedImage(file);
-      dispatch({ type: 'UPLOADED', image });
+      addPhotos([image]);
     } catch (err) {
       notify.error(err instanceof UploadError ? err.message : 'That file couldn’t be opened as an image.');
     } finally {

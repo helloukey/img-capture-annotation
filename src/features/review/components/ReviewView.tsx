@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useSession } from '@/app/AppContext';
+import { useDeletePhoto } from '@/features/session/hooks/useDeletePhoto';
 import type { CapturedImage } from '@/shared/types';
 import { Button } from '@/shared/ui/Button';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Check, LoaderCircle, RotateCcw } from '@/shared/ui/icons';
 
 export interface ReviewViewProps {
@@ -14,7 +14,8 @@ export interface ReviewViewProps {
 }
 
 export function ReviewView({ image, quality, poorQuality = false }: ReviewViewProps) {
-  const { state, dispatch } = useAppFlow();
+  const { go } = useSession();
+  const retake = useDeletePhoto();
   const [loaded, setLoaded] = useState(false);
 
   return (
@@ -50,7 +51,7 @@ export function ReviewView({ image, quality, poorQuality = false }: ReviewViewPr
             size="lg"
             variant={poorQuality ? 'primary' : 'secondary'}
             emphasis={poorQuality}
-            onClick={() => dispatch({ type: 'RETAKE' })}
+            onClick={() => retake.request(image.id)}
           >
             <RotateCcw size={18} aria-hidden /> Retake
           </Button>
@@ -58,22 +59,14 @@ export function ReviewView({ image, quality, poorQuality = false }: ReviewViewPr
             className="flex-1 whitespace-nowrap px-3"
             size="lg"
             variant={poorQuality ? 'secondary' : 'primary'}
-            onClick={() => dispatch({ type: 'ACCEPT' })}
+            onClick={() => go('annotate')}
           >
             <Check size={18} aria-hidden /> {poorQuality ? 'Use anyway' : 'Use Photo'}
           </Button>
         </div>
       </div>
 
-      <ConfirmDialog
-        open={state.pendingConfirm === 'retake'}
-        title="Discard annotations?"
-        description={`Retaking will discard ${state.annotationCount} annotation${state.annotationCount === 1 ? '' : 's'} on this photo.`}
-        confirmLabel="Discard and retake"
-        destructive
-        onConfirm={() => dispatch({ type: 'CONFIRM' })}
-        onCancel={() => dispatch({ type: 'CANCEL' })}
-      />
+      {retake.dialog}
     </section>
   );
 }

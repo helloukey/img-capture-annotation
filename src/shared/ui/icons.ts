@@ -26,5 +26,8 @@ export {
   ChevronDown,
   Eraser,
   SquareDashed,
+  Layers,
+  Images,
+  Plus,
 } from 'lucide-react';
 export type { LucideIcon as Icon } from 'lucide-react';

@@ -3,32 +3,90 @@ import { laplacianVariance, meanLuma, toGrayscale } from './metrics';
 import { ANALYSIS_LONG_SIDE } from './thresholds';
 import type { ImageMetrics } from './types';
 
-async function loadDrawable(
-  blob: Blob,
-): Promise<{ source: CanvasImageSource; width: number; height: number; release(): void }> {
+export interface DecodedImage {
+  source: CanvasImageSource;
+  width: number;
+  height: number;
+  close(): void;
+}
+
+/** Decodes once (EXIF orientation applied); callers MUST call close(). */
+export async function decodeForProcessing(blob: Blob): Promise<DecodedImage> {
   if (typeof createImageBitmap === 'function') {
     try {
       const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
-      return { source: bmp, width: bmp.width, height: bmp.height, release: () => bmp.close() };
+      return { source: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close() };
     } catch {
-      // fall through
+      // fall through to <img>
     }
   }
   const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.src = url;
-  await img.decode();
-  return {
-    source: img,
-    width: img.naturalWidth,
-    height: img.naturalHeight,
-    release: () => URL.revokeObjectURL(url),
-  };
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return {
+      source: img,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      close: () => URL.revokeObjectURL(url),
+    };
+  } catch (err) {
+    URL.revokeObjectURL(url);
+    throw err;
+  }
+}
+
+function scaledCanvas(source: CanvasImageSource, w: number, h: number, longSide: number, readBack: boolean) {
+  const scale = Math.min(1, longSide / Math.max(w, h));
+  const cw = Math.max(1, Math.round(w * scale));
+  const ch = Math.max(1, Math.round(h * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext('2d', readBack ? { willReadFrequently: true } : undefined);
+  if (!ctx) return null;
+  // High-quality (area-averaging) downscale. The default "low" quality skips pixels when
+  // shrinking ~8×, and the resulting aliasing inflated sharpness scores ~4× in calibration.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, 0, 0, cw, ch);
+  return { canvas, ctx, w: cw, h: ch };
+}
+
+/** Brightness and sharpness from a 512 px copy. Null when 2D canvas is unavailable. */
+export function analyzeSource(
+  source: CanvasImageSource,
+  w: number,
+  h: number,
+): { brightnessPct: number; sharpness: number } | null {
+  const c = scaledCanvas(source, w, h, ANALYSIS_LONG_SIDE, true);
+  if (!c) return null;
+  const { data } = c.ctx.getImageData(0, 0, c.w, c.h);
+  return { brightnessPct: meanLuma(data), sharpness: laplacianVariance(toGrayscale(data), c.w, c.h) };
+}
+
+/** A small JPEG preview for thumbnails, so strips never render full-resolution images. */
+export function renderThumbnail(
+  source: CanvasImageSource,
+  w: number,
+  h: number,
+  longSide: number,
+): Promise<Blob> {
+  const c = scaledCanvas(source, w, h, longSide, false);
+  if (!c) return Promise.reject(new Error('Canvas 2D is not available.'));
+  return new Promise((resolve, reject) =>
+    c.canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Could not encode thumbnail.'))),
+      'image/jpeg',
+      0.8,
+    ),
+  );
 }
 
 /**
- * Decodes the photo, draws a copy downscaled to a 512px long side, and computes brightness and
- * sharpness. The full-resolution original is never modified (Constitution II).
+ * Decodes the photo and computes brightness and sharpness on a downscaled copy. The
+ * full-resolution original is never modified (Constitution II).
  */
 export async function measureImage(image: CapturedImage): Promise<ImageMetrics> {
   const base: ImageMetrics = {
@@ -38,40 +96,14 @@ export async function measureImage(image: CapturedImage): Promise<ImageMetrics> 
     brightnessPct: null,
     sharpness: null,
   };
-  const started = performance.now();
+  let decoded: DecodedImage | null = null;
   try {
-    const drawable = await loadDrawable(image.blob);
-    const scale = Math.min(1, ANALYSIS_LONG_SIDE / Math.max(drawable.width, drawable.height));
-    const w = Math.max(1, Math.round(drawable.width * scale));
-    const h = Math.max(1, Math.round(drawable.height * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) {
-      drawable.release();
-      return base;
-    }
-    // High-quality (area-averaging) downscale. The default "low" quality skips pixels when
-    // shrinking ~8×, and the resulting aliasing inflated sharpness scores ~4× in calibration.
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(drawable.source, 0, 0, w, h);
-    drawable.release();
-    const { data } = ctx.getImageData(0, 0, w, h);
-    const metrics = {
-      ...base,
-      brightnessPct: meanLuma(data),
-      sharpness: laplacianVariance(toGrayscale(data), w, h),
-    };
-    if (import.meta.env.DEV) {
-      console.info(
-        `[quality] analyzed ${image.width}×${image.height} in ${Math.round(performance.now() - started)} ms`,
-        metrics,
-      );
-    }
-    return metrics;
+    decoded = await decodeForProcessing(image.blob);
+    const pixels = analyzeSource(decoded.source, decoded.width, decoded.height);
+    return pixels ? { ...base, ...pixels } : base;
   } catch {
     return base;
+  } finally {
+    decoded?.close();
   }
 }

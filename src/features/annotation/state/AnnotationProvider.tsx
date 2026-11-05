@@ -1,56 +1,43 @@
+import { createContext, useContext, useMemo, type Dispatch, type ReactNode } from 'react';
+import { useApp } from '@/app/AppContext';
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  type Dispatch,
-  type ReactNode,
-} from 'react';
-import {
-  annotationReducer,
   initialAnnotationState,
   type AnnotationAction,
   type AnnotationState,
 } from '../lib/annotationReducer';
 
 interface AnnotationContextValue {
+  /** The selected photo's annotations. */
   state: AnnotationState;
+  /** Acts on the selected photo. */
   dispatch: Dispatch<AnnotationAction>;
+  photoId: string | null;
+  /** Acts on a specific photo, e.g. an Undo for a photo that is no longer selected (FR-025). */
+  dispatchTo(photoId: string, action: AnnotationAction): void;
 }
 
 const AnnotationContext = createContext<AnnotationContextValue | null>(null);
 
-export interface AnnotationProviderProps {
-  imageId: string;
-  /** Reports the annotation count so the app flow can guard destructive steps (FR-028). */
-  onCountChange?: (count: number) => void;
-  initialState?: AnnotationState;
-  children: ReactNode;
-}
-
 /**
- * Single source of truth for the canvas and the list. Mount it ABOVE the review/annotate views,
- * keyed by image id, so annotations survive Annotate → Review → Annotate (data-model.md §4).
+ * Adapter over the session store (contracts/session-store.md): exposes the selected photo's
+ * annotation slice with feature 001's API, so the canvas, list, shortcuts and export are unchanged.
  */
-export function AnnotationProvider({
-  imageId,
-  onCountChange,
-  initialState,
-  children,
-}: AnnotationProviderProps) {
-  const [state, dispatch] = useReducer(annotationReducer, initialState ?? initialAnnotationState(imageId));
+export function AnnotationProvider({ children }: { children: ReactNode }) {
+  const { state, dispatch } = useApp();
+  const photoId = state.session.selectedId;
+  const slice = photoId ? state.session.annotations[photoId] : undefined;
 
-  useEffect(() => {
-    if (state.imageId !== imageId) dispatch({ type: 'RESET', imageId });
-  }, [imageId, state.imageId]);
-
-  const count = state.items.length;
-  useEffect(() => {
-    onCountChange?.(count);
-  }, [count, onCountChange]);
-
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  const value = useMemo<AnnotationContextValue>(
+    () => ({
+      state: slice ?? initialAnnotationState(photoId),
+      photoId,
+      dispatch: (action) => {
+        if (photoId) dispatch({ type: 'ANNOTATION', photoId, action });
+      },
+      dispatchTo: (target, action) => dispatch({ type: 'ANNOTATION', photoId: target, action }),
+    }),
+    [slice, photoId, dispatch],
+  );
   return <AnnotationContext.Provider value={value}>{children}</AnnotationContext.Provider>;
 }
 

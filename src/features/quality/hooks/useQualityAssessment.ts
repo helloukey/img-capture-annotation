@@ -1,50 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { usePhotoInfo } from '@/features/session/hooks/usePhotoInfo';
+import { photoProcessor } from '@/features/session/lib/defaultPhotoProcessor';
 import type { CapturedImage } from '@/shared/types';
 import { assessQuality } from '../lib/assess';
-import { measureImage } from '../lib/measure';
 import { QUALITY_THRESHOLDS } from '../lib/thresholds';
-import type { ImageMetrics, QualityAssessment } from '../lib/types';
+import type { QualityAssessment } from '../lib/types';
 
-/** Metrics per image id, so moving Review ↔ Annotate never re-analyzes. */
-const metricsCache = new Map<string, ImageMetrics>();
-
+/**
+ * Quality for one photo, backed by the shared background processor (feature 002, research R5):
+ * computed once per photo, cached by id, and never during a burst.
+ */
 export function useQualityAssessment(image: CapturedImage | null): QualityAssessment | null {
-  const [, setVersion] = useState(0);
+  const info = usePhotoInfo(image?.id);
 
+  // Photos normally arrive through the session (already queued); this covers any other caller.
   useEffect(() => {
-    if (!image || metricsCache.has(image.id)) return;
-    let cancelled = false;
-    void measureImage(image).then((m) => {
-      metricsCache.set(image.id, m);
-      const oldest = metricsCache.keys().next().value;
-      if (metricsCache.size > 8 && oldest !== undefined) metricsCache.delete(oldest);
-      if (!cancelled) setVersion((v) => v + 1);
-    });
-    return () => {
-      cancelled = true;
-    };
+    if (image && !photoProcessor.get(image.id)) photoProcessor.enqueue([image]);
+    if (image) photoProcessor.prioritize(image.id);
   }, [image]);
 
   if (!image) return null;
   const ctx = { torchSupported: image.torchAvailable ?? false };
-  const cached = metricsCache.get(image.id);
-  if (cached) return assessQuality(cached, QUALITY_THRESHOLDS, ctx);
-  // Resolution and size are known immediately; pixel checks follow.
-  const pending = assessQuality(
-    {
-      width: image.width,
-      height: image.height,
-      byteSize: image.byteSize,
-      brightnessPct: null,
-      sharpness: null,
-    },
-    QUALITY_THRESHOLDS,
-    ctx,
-  );
-  return { ...pending, status: 'pending' };
-}
-
-/** Test hook: clears cached metrics. */
-export function clearQualityCache() {
-  metricsCache.clear();
+  if (info?.status === 'ready' && info.metrics) return assessQuality(info.metrics, QUALITY_THRESHOLDS, ctx);
+  const known = {
+    width: image.width,
+    height: image.height,
+    byteSize: image.byteSize,
+    brightnessPct: null,
+    sharpness: null,
+  };
+  if (info?.status === 'error') return assessQuality(known, QUALITY_THRESHOLDS, ctx);
+  return { ...assessQuality(known, QUALITY_THRESHOLDS, ctx), status: 'pending' };
 }

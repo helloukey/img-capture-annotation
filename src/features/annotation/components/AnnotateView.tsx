@@ -1,9 +1,9 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useSession } from '@/app/AppContext';
+import { useDeletePhoto } from '@/features/session/hooks/useDeletePhoto';
 import type { CapturedImage } from '@/shared/types';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import { cn } from '@/shared/ui/cn';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { IconButton } from '@/shared/ui/IconButton';
 import { List, SquareDashed, Trash2 } from '@/shared/ui/icons';
 import { Sheet } from '@/shared/ui/Sheet';
@@ -26,7 +26,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewProps) {
-  const { state: flow, dispatch: flowDispatch } = useAppFlow();
+  const { go } = useSession();
+  const retake = useDeletePhoto();
   const { state, selected, select, rename, deleteWithUndo, displayName } = useAnnotations();
   const wide = useMediaQuery('(min-width: 768px)');
   const [panelOpen, setPanelOpen] = useState(true);
@@ -53,8 +54,8 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- delegated shortcuts for the canvas and list
     <section aria-label="Annotate photo" className="flex h-full flex-col" onKeyDown={onKeyDown}>
       <AnnotationToolbar
-        onBack={() => flowDispatch({ type: 'BACK_TO_REVIEW' })}
-        onRetake={() => flowDispatch({ type: 'RETAKE' })}
+        onBack={() => go('review')}
+        onRetake={() => retake.request(image.id)}
         quality={quality}
         actions={
           <>
@@ -125,15 +126,7 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
         )}
       </div>
 
-      <ConfirmDialog
-        open={flow.pendingConfirm === 'retake'}
-        title="Discard annotations?"
-        description={`Retaking will discard ${state.items.length} annotation${state.items.length === 1 ? '' : 's'} on this photo.`}
-        confirmLabel="Discard and retake"
-        destructive
-        onConfirm={() => flowDispatch({ type: 'CONFIRM' })}
-        onCancel={() => flowDispatch({ type: 'CANCEL' })}
-      />
+      {retake.dialog}
     </section>
   );
 }
