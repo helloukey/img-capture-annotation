@@ -13,9 +13,9 @@ import type { QualityAssessment } from '../lib/types';
 export function useQualityAssessment(image: CapturedImage | null): QualityAssessment | null {
   const info = usePhotoInfo(image?.id);
 
-  // Photos normally arrive through the session (already queued); this covers any other caller.
+  // Only the session queues photos (AppProvider), so a deleted photo is never re-analyzed;
+  // here we just move the photo on screen to the front of the queue.
   useEffect(() => {
-    if (image && !photoProcessor.get(image.id)) photoProcessor.enqueue([image]);
     if (image) photoProcessor.prioritize(image.id);
   }, [image]);
 

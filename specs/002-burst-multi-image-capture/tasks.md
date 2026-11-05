@@ -201,7 +201,7 @@ remain and continue to Annotate (quickstart B6–B9, B16).
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T033 [P] [US2] Write `src/features/review/components/ReviewView.multi.test.tsx`, rendering under `AppProvider` with a 4-photo session:
+- [X] T033 [P] [US2] Write `src/features/review/components/ReviewView.multi.test.tsx`, rendering under `AppProvider` with a 4-photo session:
   - selecting a thumbnail switches the large `<img>` src and the quality panel;
   - Delete photo on an unannotated photo removes it at once and offers an Undo toast that restores it at its index;
   - deleting an annotated photo first shows a `ConfirmDialog` ("{k} annotation(s) will be lost"), where cancel keeps it;
@@ -213,12 +213,12 @@ remain and continue to Annotate (quickstart B6–B9, B16).
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Implement the multi-photo actions in `src/features/review/components/ReviewView.tsx`:
+- [X] T034 [US2] Implement the multi-photo actions in `src/features/review/components/ReviewView.tsx`:
   - **Several photos**: primary "Continue to annotate" → `go('annotate')`; secondary "Add more" → `go('camera')`; "Start over" (**always** a `ConfirmDialog`: "Discard all {n} photos{and k annotations}?"; FR-020, constitution V) → `startOver()`; "Delete photo" for the selected photo (a `ConfirmDialog` with the count if it's annotated) → `deletePhoto(id)`.
   - **One photo**: keep feature 001's "Retake" (→ `deletePhoto`) and "Use Photo" / "Use anyway", plus a ghost "Add more" link.
-- [ ] T035 [US2] Hook `PhotoStrip` `onDelete` in Review to the same confirm-then-`deletePhoto` flow, and pass the quality verdicts (`usePhotoInfo` + `assessQuality`) and `annotationCount` per photo to the thumbnails, via `src/features/session/hooks/useStripData.ts`
-- [ ] T036 [US2] Prevent a quality result from appearing for a deleted photo: when a deletion is finalized, `photoProcessor.release(id)` already discards its result. Additionally ensure `useQualityAssessment` returns null for an id that is no longer in the session. Add a case to `src/features/session/lib/photoProcessor.test.ts`
-- [ ] T037 [US2] Extend `tests/e2e/burst.spec.ts` (part 2): take a burst, delete 2 photos via the strip's keyboard Delete, click Undo on the last toast, assert the count, then Add more, take a single photo, and assert the count grew by 1
+- [X] T035 [US2] Hook `PhotoStrip` `onDelete` in Review to the same confirm-then-`deletePhoto` flow, and pass the quality verdicts (`usePhotoInfo` + `assessQuality`) and `annotationCount` per photo to the thumbnails, via `src/features/session/hooks/useStripData.ts`
+- [X] T036 [US2] Prevent a quality result from appearing for a deleted photo: when a deletion is finalized, `photoProcessor.release(id)` already discards its result. Additionally ensure `useQualityAssessment` returns null for an id that is no longer in the session. Add a case to `src/features/session/lib/photoProcessor.test.ts`
+- [X] T037 [US2] Extend `tests/e2e/burst.spec.ts` (part 2): take a burst, delete 2 photos via the strip's keyboard Delete, click Undo on the last toast, assert the count, then Add more, take a single photo, and assert the count grew by 1
 
 **Checkpoint**: Burst, then curate, works end to end.
 

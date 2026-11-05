@@ -16,6 +16,10 @@ export const notify = {
   info(message: string) {
     toast(message);
   },
+  /** Removes every visible toast (used between tests). */
+  dismissAll() {
+    toast.dismiss();
+  },
   /** A toast with an Undo action. `onDismiss` fires when it closes without Undo being pressed. */
   undo(message: string, onUndo: () => void, { durationMs = 5000, onDismiss }: UndoOptions = {}) {
     let undone = false;

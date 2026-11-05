@@ -22,12 +22,41 @@ import { usePageVisibility } from './usePageVisibility';
 
 export type BurstPhase = 'idle' | 'pressing' | 'running';
 
+/**
+ * After a held press ends, the browser still dispatches a synthetic click at the release point
+ * (touch: after touchend). By then the app may already show Review, so that click would hit a
+ * Review button under the finger. Swallow one click near the release point, briefly.
+ */
+function suppressGhostClick(x: number, y: number, windowMs = 600, radius = 40) {
+  const onClick = (e: globalThis.MouseEvent) => {
+    if (Math.hypot(e.clientX - x, e.clientY - y) > radius) return;
+    e.preventDefault();
+    e.stopPropagation();
+    cleanup();
+  };
+  const timer = setTimeout(() => cleanup(), windowMs);
+  function cleanup() {
+    clearTimeout(timer);
+    window.removeEventListener('click', onClick, true);
+  }
+  window.addEventListener('click', onClick, true);
+}
+
+const LIMIT_REASONS: ReadonlySet<BurstStopReason> = new Set([
+  'time-limit',
+  'frame-limit',
+  'session-full',
+  'memory-limit',
+]);
+
 export interface UseBurstOptions {
   camera: UseCameraResult;
   /** Receives the photos of a tap (reason null) or a burst (with its stop reason). */
   onPhotos(photos: Photo[], reason: BurstStopReason | null): void;
   /** Current session size, read before every burst frame. */
   session(): { photos: number; heldBytes: number };
+  /** Called as soon as a burst stops, even if the finger is still down (toast/announcement). */
+  onStopped?(reason: BurstStopReason, frames: number): void;
   /** Called as each photo starts, for the shutter flash (feedback within 100 ms). */
   onFrame?(): void;
   onError?(error: unknown): void;
@@ -67,6 +96,8 @@ export function useBurst(options: UseBurstOptions): UseBurstResult {
   const pointerId = useRef<number | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const signal = useRef<StopSignal | null>(null);
+  /** A finished burst waiting for the finger to lift (see startBurst). */
+  const pendingDelivery = useRef<(() => void) | null>(null);
 
   const setPhase = useCallback((p: BurstPhase) => {
     phaseRef.current = p;
@@ -109,19 +140,40 @@ export function useBurst(options: UseBurstOptions): UseBurstResult {
     };
     const result = await runBurst(env, sig);
     signal.current = null;
-    // Release the camera (and torch) once the photos are taken; stay live if nothing was taken.
-    if (result.frames.length) opts.current.camera.stop();
     photoProcessor.resume();
     setLastStop({ reason: result.stopReason, frames: result.frames.length });
     setStartedAt(null);
     setPhase('idle');
-    opts.current.onPhotos(result.frames, result.stopReason);
+    opts.current.onStopped?.(result.stopReason, result.frames.length);
+
+    const deliver = () => {
+      pendingDelivery.current = null;
+      // Release the camera (and torch) once the photos are taken; stay live if nothing was taken.
+      if (result.frames.length) opts.current.camera.stop();
+      opts.current.onPhotos(result.frames, result.stopReason);
+    };
+    // A limit can stop the burst while the finger is still down. Moving to Review now would make
+    // the eventual lift tap whatever Review shows under the finger, so wait for the release.
+    // Only limits can end a burst while the shutter is still pressed and on screen; an interruption
+    // or backgrounding replaces the camera UI, so those deliver immediately.
+    const limitStop = LIMIT_REASONS.has(result.stopReason);
+    if (limitStop && pointerId.current !== null) pendingDelivery.current = deliver;
+    else {
+      pointerId.current = null;
+      deliver();
+    }
   }, [setPhase]);
 
   const endPress = useCallback(
     (e: PointerEvent<HTMLButtonElement>, kind: 'up' | 'cancel') => {
       if (e.pointerId !== pointerId.current) return; // only the pointer that started the press counts
       pointerId.current = null;
+      const wasHold = holdTimer.current === null; // the press became a burst
+      if (wasHold) suppressGhostClick(e.clientX, e.clientY);
+      if (pendingDelivery.current) {
+        pendingDelivery.current();
+        return;
+      }
       if (holdTimer.current !== null) {
         clearTimeout(holdTimer.current);
         holdTimer.current = null;
@@ -169,6 +221,10 @@ export function useBurst(options: UseBurstOptions): UseBurstResult {
   useEffect(() => {
     if (visible) return;
     signal.current?.stop('backgrounded');
+    if (pendingDelivery.current) {
+      pointerId.current = null;
+      pendingDelivery.current();
+    }
     if (holdTimer.current !== null) {
       clearTimeout(holdTimer.current);
       holdTimer.current = null;

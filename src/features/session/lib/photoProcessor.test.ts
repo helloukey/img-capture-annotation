@@ -156,6 +156,16 @@ describe('photoProcessor', () => {
     expect(proc.get(b.id)?.status).toBe('ready');
   });
 
+  it('a photo released while still queued is never processed and never gets a result', async () => {
+    const { proc, deps, flush } = setup();
+    const [a, b] = [photo(), photo()];
+    proc.enqueue([a, b]);
+    proc.release(b.id);
+    await flush();
+    expect(deps.decode).toHaveBeenCalledTimes(1);
+    expect(proc.get(b.id)).toBeUndefined();
+  });
+
   it('releaseAll revokes every thumbnail and notifies subscribers', async () => {
     const { proc, flush } = setup();
     const listener = vi.fn();

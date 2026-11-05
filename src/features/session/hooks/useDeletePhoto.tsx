@@ -2,17 +2,31 @@ import { useState } from 'react';
 import { useSession } from '@/app/AppContext';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 
+export interface DeleteCopy {
+  title: string;
+  confirmLabel: string;
+  verb: string;
+}
+
+/** Wording for Retake on a single photo (feature 001). */
+export const RETAKE_COPY: DeleteCopy = {
+  title: 'Discard annotations?',
+  confirmLabel: 'Discard and retake',
+  verb: 'Retaking',
+};
+
+/** Wording for deleting one photo of several (feature 002). */
+export const DELETE_COPY: DeleteCopy = {
+  title: 'Delete this photo?',
+  confirmLabel: 'Delete photo',
+  verb: 'Deleting this photo',
+};
+
 /**
  * Deleting a photo (or retaking the only one) is undoable; if it has annotations, the user is
  * asked first and told how many will be lost (FR-018, constitution V).
  */
-export function useDeletePhoto(
-  copy: { title: string; confirmLabel: string; verb: string } = {
-    title: 'Discard annotations?',
-    confirmLabel: 'Discard and retake',
-    verb: 'Retaking',
-  },
-) {
+export function useDeletePhoto(copy: DeleteCopy = RETAKE_COPY) {
   const { deletePhoto, annotationCount } = useSession();
   const [target, setTarget] = useState<{ id: string; count: number } | null>(null);
 

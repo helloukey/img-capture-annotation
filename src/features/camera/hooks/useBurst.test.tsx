@@ -112,9 +112,46 @@ describe('tap vs hold (FR-001, FR-002)', () => {
     const { onPhotos, shutter } = setup();
     press(shutter);
     await advance(TAP_THRESHOLD_MS + 1 + 4000);
+    release(shutter); // delivery waits for the finger to lift
+    await advance(10);
     const [photos, reason] = onPhotos.mock.calls[0]!;
     expect(photos.length).toBeLessThanOrEqual(BURST_MAX_FRAMES);
     expect(['time-limit', 'frame-limit']).toContain(reason);
+  });
+});
+
+describe('auto-stop while still held', () => {
+  it('reports the stop at once but delivers photos only when the finger lifts (no ghost tap on Review)', async () => {
+    const onStopped = vi.fn();
+    const camera = fakeCamera();
+    const onPhotos = vi.fn();
+    render(
+      <Harness
+        camera={camera}
+        onPhotos={onPhotos}
+        onStopped={onStopped}
+        session={() => ({ photos: 0, heldBytes: 0 })}
+      />,
+    );
+    const shutter = screen.getByRole('button', { name: 'Capture photo' });
+    press(shutter);
+    await advance(TAP_THRESHOLD_MS + 1 + 3500); // past the 3 s limit, finger still down
+    expect(onStopped).toHaveBeenCalledWith(expect.stringMatching(/limit/), expect.any(Number));
+    expect(onPhotos).not.toHaveBeenCalled();
+    expect(camera.stop).not.toHaveBeenCalled(); // the preview stays up while held
+    fireEvent.pointerUp(shutter, { pointerId: 1, pointerType: 'touch', clientX: 100, clientY: 200 });
+    await advance(10);
+    expect(onPhotos).toHaveBeenCalledTimes(1);
+    expect(camera.stop).toHaveBeenCalled();
+
+    // The browser's synthetic click at the release point must not reach whatever is now there…
+    const ghost = new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 102, clientY: 198 });
+    document.body.dispatchEvent(ghost);
+    expect(ghost.defaultPrevented).toBe(true);
+    // …but a click elsewhere, or a later click, is untouched.
+    const elsewhere = new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 400, clientY: 50 });
+    document.body.dispatchEvent(elsewhere);
+    expect(elsewhere.defaultPrevented).toBe(false);
   });
 });
 

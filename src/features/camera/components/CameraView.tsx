@@ -31,12 +31,13 @@ export function CameraView() {
     torchSupported.current = t.supported;
   }, []);
 
-  const onPhotos = (photos: Photo[], reason: BurstStopReason | null) => {
-    if (reason) {
-      setAnnouncement(burstAnnouncement(photos.length, reason));
-      const why = BURST_STOP_COPY[reason];
-      if (why) (reason === 'interrupted' || reason === 'backgrounded' ? notify.error : notify.info)(why);
-    }
+  const onStopped = (reason: BurstStopReason, frames: number) => {
+    setAnnouncement(burstAnnouncement(frames, reason));
+    const why = BURST_STOP_COPY[reason];
+    if (why) (reason === 'interrupted' || reason === 'backgrounded' ? notify.error : notify.info)(why);
+  };
+
+  const onPhotos = (photos: Photo[]) => {
     if (!photos.length) return;
     const result = addPhotos(photos.map((p) => ({ ...p, torchAvailable: torchSupported.current })));
     if (result.skipped)
@@ -46,6 +47,7 @@ export function CameraView() {
   const burst = useBurst({
     camera,
     onPhotos,
+    onStopped,
     session: () => ({
       photos: stateRef.current.session.photos.length,
       heldBytes: heldBytes(stateRef.current.session),

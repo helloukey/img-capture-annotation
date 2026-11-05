@@ -50,3 +50,34 @@ test.describe('US1 hold-to-burst', () => {
     expect(menus).toEqual([]);
   });
 });
+
+test.describe('US2 review and delete', () => {
+  test('delete photos from the strip, undo one, then add more to the same session', async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'desktop-chrome', 'keyboard flow runs once');
+    await openCamera(page);
+    await holdShutter(page, 1700);
+    await expect(page.getByRole('img', { name: 'Your capture' })).toBeVisible();
+    await expect.poll(() => stripCount(page)).toBeGreaterThanOrEqual(4);
+    const start = await stripCount(page);
+
+    const thumbs = page.getByRole('toolbar', { name: /^Photos/ }).getByRole('button');
+    await thumbs.nth(1).focus();
+    await page.keyboard.press('Delete');
+    await expect.poll(() => stripCount(page)).toBe(start - 1);
+    await thumbs.nth(1).focus();
+    await page.keyboard.press('Delete');
+    await expect.poll(() => stripCount(page)).toBe(start - 2);
+
+    // Sonner stacks toasts newest-first; the front one belongs to the latest deletion.
+    await page.getByRole('button', { name: 'Undo' }).first().click();
+    await expect.poll(() => stripCount(page)).toBe(start - 1);
+
+    await page.getByRole('button', { name: /Add more/ }).click();
+    await expect(page.getByRole('button', { name: 'Capture photo' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Capture photo' }).click();
+    await expect(page.getByRole('img', { name: 'Your capture' })).toBeVisible();
+    await expect.poll(() => stripCount(page)).toBe(start);
+  });
+});
