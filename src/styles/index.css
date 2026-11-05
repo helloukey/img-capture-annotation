@@ -46,6 +46,16 @@
   }
 }
 
+/* Burst progress ring (BurstProgress.tsx). Top-level so Tailwind keeps it. */
+@keyframes burst-ring {
+  from {
+    stroke-dashoffset: var(--ring-length);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @layer base {
   html,
   body,

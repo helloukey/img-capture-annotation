@@ -133,7 +133,7 @@ own resolution. A tap gives exactly 1 photo (quickstart B1–B5).
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T021 [P] [US1] Write `src/features/session/lib/burstScheduler.test.ts` using Vitest fake timers and a fake `BurstEnv`, covering guarantees 1–6 of contracts/burst.md:
+- [X] T021 [P] [US1] Write `src/features/session/lib/burstScheduler.test.ts` using Vitest fake timers and a fake `BurstEnv`, covering guarantees 1–6 of contracts/burst.md:
   - `captureFrame` is never concurrent;
   - the next frame starts at `max(prevStart + 333, prevEnd)`;
   - a 600 ms capture yields fewer frames with no backlog;
@@ -145,7 +145,7 @@ own resolution. A tap gives exactly 1 photo (quickstart B1–B5).
   - a rejected capture gives `interrupted` and keeps earlier frames;
   - no frame when a limit is already hit at t = 0;
   - a 50-trial randomized loop (capture latency 50–900 ms, random session fill and frame sizes) asserting that no run ever exceeds 3000 ms, 10 frames, 20 session photos or 150 MB, and that captures never overlap (SC-004).
-- [ ] T022 [P] [US1] Write `src/features/camera/components/ShutterButton.test.tsx` with fake timers and a fake controller:
+- [X] T022 [P] [US1] Write `src/features/camera/components/ShutterButton.test.tsx` with fake timers and a fake controller:
   - pointerdown then pointerup at 299 ms gives one tap (single capture, no burst);
   - at exactly 300 ms it is still a tap (FR-001: "≤ 0.3 seconds"; the hold timer is `TAP_THRESHOLD_MS + 1`);
   - holding 301 ms starts a burst;
@@ -154,7 +154,7 @@ own resolution. A tap gives exactly 1 photo (quickstart B1–B5).
   - `pointercancel` and `lostpointercapture` stop with `released`;
   - moving the held pointer outside the button's bounds (with pointer capture) does **not** stop the burst; `pointerup` outside the button does (FR-003);
   - Enter or Space gives a single capture, never a burst.
-- [ ] T023 [P] [US1] Write `src/features/camera/hooks/useBurst.test.tsx` using `tests/fakes/fakeMediaDevices.ts` and a fake `captureFrame`:
+- [X] T023 [P] [US1] Write `src/features/camera/hooks/useBurst.test.tsx` using `tests/fakes/fakeMediaDevices.ts` and a fake `captureFrame`:
   - a tap calls `camera.capture()` once;
   - a hold calls `captureFrame` sequentially and then `camera.stop()`, `photoProcessor.pause()` and `resume()`;
   - `onPhotos(frames, reason)` is called;
@@ -165,23 +165,23 @@ own resolution. A tap gives exactly 1 photo (quickstart B1–B5).
 
 ### Implementation for User Story 1
 
-- [ ] T024 [P] [US1] Implement `src/features/session/lib/burstScheduler.ts` (`runBurst(env, signal)` and `checkLimits(input)`) per contracts/burst.md and data-model.md §6, with no React imports and limits from `limits.ts`
-- [ ] T025 [US1] Add `captureFrame()` to `src/features/camera/hooks/useCamera.ts`:
+- [X] T024 [P] [US1] Implement `src/features/session/lib/burstScheduler.ts` (`runBurst(env, signal)` and `checkLimits(input)`) per contracts/burst.md and data-model.md §6, with no React imports and limits from `limits.ts`
+- [X] T025 [US1] Add `captureFrame()` to `src/features/camera/hooks/useCamera.ts`:
   - It uses `captureVideoFrame(video)` from `src/features/camera/lib/capture.ts`, a canvas at `videoWidth × videoHeight` with JPEG 0.95.
   - It builds the photo via `createCapturedImage(blob, { source: 'camera', captureMethod: 'burst', size: { width: videoWidth, height: videoHeight } })`.
   - It does **not** stop the stream, and rejects when the status isn't `live`.
   - Add it to `UseCameraResult` (documented in this feature's contracts/burst.md; feature 001's contracts are not edited).
-- [ ] T026 [US1] Implement `src/features/camera/hooks/useBurst.ts` per contracts/burst.md: phases, the `TAP_THRESHOLD_MS + 1` hold timer (with release checked against `performance.now()`, so exactly 300 ms is a tap), first-`pointerId` locking with pointer capture, `shutterHandlers`, `toggleBurst()`, and stop signals (release, visibility, camera status). It assigns `burstId` and `burstIndex` to frames, pauses and resumes `photoProcessor`, and calls `camera.stop()` after a burst
-- [ ] T027 [US1] Update `src/features/camera/components/ShutterButton.tsx` to spread `shutterHandlers`, add `style={{ touchAction: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }}`, keep the accessible name "Capture photo", and add `aria-describedby` hint text "Hold to take a burst"
-- [ ] T028 [P] [US1] Implement `src/features/camera/components/BurstProgress.tsx`: an SVG ring around the 72 px shutter whose stroke animates linearly over `BURST_MAX_MS` from `startedAt` (a CSS animation keyed by `startedAt`). With `prefers-reduced-motion`, show a static ring. Add a counter chip showing `frameCount`
-- [ ] T029 [US1] Wire up `src/features/camera/components/CameraView.tsx`:
+- [X] T026 [US1] Implement `src/features/camera/hooks/useBurst.ts` per contracts/burst.md: phases, the `TAP_THRESHOLD_MS + 1` hold timer (with release checked against `performance.now()`, so exactly 300 ms is a tap), first-`pointerId` locking with pointer capture, `shutterHandlers`, `toggleBurst()`, and stop signals (release, visibility, camera status). It assigns `burstId` and `burstIndex` to frames, pauses and resumes `photoProcessor`, and calls `camera.stop()` after a burst
+- [X] T027 [US1] Update `src/features/camera/components/ShutterButton.tsx` to spread `shutterHandlers`, add `style={{ touchAction: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }}`, keep the accessible name "Capture photo", and add `aria-describedby` hint text "Hold to take a burst"
+- [X] T028 [P] [US1] Implement `src/features/camera/components/BurstProgress.tsx`: an SVG ring around the 72 px shutter whose stroke animates linearly over `BURST_MAX_MS` from `startedAt` (a CSS animation keyed by `startedAt`). With `prefers-reduced-motion`, show a static ring. Add a counter chip showing `frameCount`
+- [X] T029 [US1] Wire up `src/features/camera/components/CameraView.tsx`:
   - `useBurst({ camera, onPhotos })` → `useSession().addPhotos(photos)`; the step becomes `review` through `PHOTOS_ADDED`.
   - Render `BurstProgress` while `phase === 'running'`.
   - Disable the switch-camera, torch and gallery controls while `phase !== 'idle'` (FR-009).
   - Replace the old `handleCapture` with the tap path from `useBurst`, keeping the shutter flash for both taps and frames.
-- [ ] T030 [US1] Add stop-reason feedback in `src/features/camera/hooks/useBurst.ts` and `CameraView.tsx`, using the exact copy table in contracts/burst.md: `notify.info` for non-user reasons, plus a visually hidden `role="status" aria-live="polite"` region announcing "Burst: {n} photos. {reason}" (FR-007, FR-029)
-- [ ] T031 [US1] Update `src/features/review/components/ReviewView.tsx` to show the selected photo with `PhotoStrip` (horizontal under the photo on phones, vertical beside it at ≥ 1024 px). Selecting a thumbnail calls `useSession().select(id)`. Keep `ReviewScreen`'s quality panel bound to the selected photo
-- [ ] T032 [US1] Write e2e `tests/e2e/burst.spec.ts` (part 1):
+- [X] T030 [US1] Add stop-reason feedback in `src/features/camera/hooks/useBurst.ts` and `CameraView.tsx`, using the exact copy table in contracts/burst.md: `notify.info` for non-user reasons, plus a visually hidden `role="status" aria-live="polite"` region announcing "Burst: {n} photos. {reason}" (FR-007, FR-029)
+- [X] T031 [US1] Update `src/features/review/components/ReviewView.tsx` to show the selected photo with `PhotoStrip` (horizontal under the photo on phones, vertical beside it at ≥ 1024 px). Selecting a thumbnail calls `useSession().select(id)`. Keep `ReviewScreen`'s quality panel bound to the selected photo
+- [X] T032 [US1] Write e2e `tests/e2e/burst.spec.ts` (part 1):
   - Hold the shutter about 1.3 s with the mouse (desktop project) and with CDP touch (pixel-7). Expect at least 3 thumbnails in Review, and that each photo's quality panel shows the stream resolution.
   - Tap once and expect exactly 1 photo, with no strip.
   - Hold for more than 3.5 s and expect at most 10 photos plus the "Burst limit reached" toast.
