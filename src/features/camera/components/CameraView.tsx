@@ -12,6 +12,7 @@ import { notify } from '@/shared/ui/toast';
 import { useBurst } from '../hooks/useBurst';
 import { useCamera } from '../hooks/useCamera';
 import type { UseTorchResult } from '../hooks/useTorch';
+import { BurstButton } from './BurstButton';
 import { BurstProgress } from './BurstProgress';
 import { CameraErrorState } from './CameraErrorState';
 import { CameraPreview } from './CameraPreview';
@@ -105,13 +106,16 @@ export function CameraView() {
       {camera.status !== 'error' && (
         <div
           className={cn(
-            'absolute flex items-center justify-between gap-4',
+            'absolute items-center gap-4',
             landscape
-              ? 'inset-y-0 right-0 w-28 flex-col-reverse justify-center py-6 pr-[max(1rem,env(safe-area-inset-right))]'
-              : 'inset-x-0 bottom-0 safe-bottom px-8 pt-10 bg-gradient-to-t from-black/70 to-transparent',
+              ? 'inset-y-0 right-0 flex w-28 flex-col-reverse justify-center py-6 pr-[max(1rem,env(safe-area-inset-right))]'
+              : 'inset-x-0 bottom-0 safe-bottom grid grid-cols-[1fr_auto_1fr] px-6 pt-10 bg-gradient-to-t from-black/70 to-transparent',
           )}
         >
-          <div className="flex h-12 w-12 items-center justify-center" inert={busyControls || undefined}>
+          <div
+            className="flex h-12 w-12 items-center justify-center justify-self-start"
+            inert={busyControls || undefined}
+          >
             <ChoosePhotoButtonCompact />
           </div>
           <div className="relative">
@@ -125,12 +129,20 @@ export function CameraView() {
               <BurstProgress startedAt={burst.startedAt} frames={burst.frameCount} />
             )}
           </div>
-          <div className="flex h-12 w-12 items-center justify-center" inert={busyControls || undefined}>
+          <div className={cn('flex items-center gap-2 justify-self-end', landscape && 'flex-col')}>
+            {/* Stays usable during a burst: activating it again stops the burst (US5). */}
+            <BurstButton
+              running={bursting}
+              disabled={!live || burst.phase === 'pressing' || (fullMessage !== null && !bursting)}
+              onToggle={burst.toggleBurst}
+            />
             {camera.canSwitchCamera && (
-              <SwitchCameraButton
-                onSwitch={() => void camera.switchCamera()}
-                disabled={camera.status !== 'live'}
-              />
+              <div inert={busyControls || undefined}>
+                <SwitchCameraButton
+                  onSwitch={() => void camera.switchCamera()}
+                  disabled={camera.status !== 'live'}
+                />
+              </div>
             )}
           </div>
         </div>

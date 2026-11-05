@@ -292,9 +292,9 @@ and capture works again (quickstart B12–B13).
 **Independent Test**: Tab to Burst and press Enter; it auto-stops at 3 s. Press Enter again
 mid-burst and it stops early (quickstart B14).
 
-- [ ] T049 [P] [US5] Write `src/features/camera/components/BurstButton.test.tsx`: the accessible name is "Take a burst of photos, up to 3 seconds"; activating it calls `toggleBurst()`; `aria-pressed` is true while running; it's disabled when the session is full; the live region announces "Burst: N photos" after it stops (FR-028, FR-029)
-- [ ] T050 [US5] Implement `src/features/camera/components/BurstButton.tsx` (an `IconButton` with a burst icon added to `src/shared/ui/icons.ts`, e.g. `GalleryHorizontalEnd` or `Layers`). Place it in the `CameraView` control bar next to the shutter, in both the portrait bar and the landscape rail layouts
-- [ ] T051 [US5] Ensure `toggleBurst()` in `src/features/camera/hooks/useBurst.ts` starts a burst without the tap threshold, stops with `toggled` on a second activation, and is ignored while a pointer press is active
+- [X] T049 [P] [US5] Write `src/features/camera/components/BurstButton.test.tsx`: the accessible name is "Take a burst of photos, up to 3 seconds"; activating it calls `toggleBurst()`; `aria-pressed` is true while running; it's disabled when the session is full; the live region announces "Burst: N photos" after it stops (FR-028, FR-029)
+- [X] T050 [US5] Implement `src/features/camera/components/BurstButton.tsx` (an `IconButton` with a burst icon added to `src/shared/ui/icons.ts`, e.g. `GalleryHorizontalEnd` or `Layers`). Place it in the `CameraView` control bar next to the shutter, in both the portrait bar and the landscape rail layouts
+- [X] T051 [US5] Ensure `toggleBurst()` in `src/features/camera/hooks/useBurst.ts` starts a burst without the tap threshold, stops with `toggled` on a second activation, and is ignored while a pointer press is active
 
 **Checkpoint**: Burst is accessible without holding.
 
