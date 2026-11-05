@@ -28,3 +28,15 @@ test('no serious/critical axe violations on any step (FR-034)', async ({ page })
   await dragOn(page, await surfacePoint(page, 0.2, 0.2), await surfacePoint(page, 0.6, 0.6));
   await expectNoSeriousViolations(page, 'annotate');
 });
+
+test('no serious/critical axe violations in a multi-photo session (feature 002)', async ({ page }) => {
+  const { holdShutter, openCamera } = await import('./helpers');
+  await openCamera(page);
+  await expectNoSeriousViolations(page, 'camera (burst controls)');
+  await holdShutter(page, 1200);
+  await expect(page.getByRole('toolbar', { name: /^Photos/ })).toBeVisible();
+  await expectNoSeriousViolations(page, 'review (strip)');
+  await page.getByRole('button', { name: /Continue to annotate/ }).click();
+  await dragOn(page, await surfacePoint(page, 0.2, 0.2), await surfacePoint(page, 0.6, 0.6));
+  await expectNoSeriousViolations(page, 'annotate (strip)');
+});

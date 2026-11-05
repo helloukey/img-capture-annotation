@@ -58,7 +58,9 @@ describe('Burst button (US5, FR-028/FR-029)', () => {
     fireEvent.click(button);
     await advance(50);
     expect(Number(screen.getByTestId('count').textContent)).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByRole('status').some((el) => /^Burst: \d+ photos/.test(el.textContent ?? ''))).toBe(true);
+    expect(screen.getAllByRole('status').some((el) => /^Burst: \d+ photos/.test(el.textContent ?? ''))).toBe(
+      true,
+    );
   });
 
   it('stops by itself at the 3 s limit', async () => {

@@ -314,18 +314,18 @@ image" (quickstart B15).
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T054 Responsive pass at 360×740, 740×360, 768×1024, 1024×768 and 1280×800 for Camera (burst ring, counter, Burst button, full banner), Review (strip on phone and desktop) and Annotate (strip plus side panel). No horizontal overflow; the strip scrolls; touch targets at least 44 px (constitution V)
-- [ ] T055 [P] Extend `tests/e2e/a11y.spec.ts` with a multi-photo session (burst, then Review, then Annotate), with no serious or critical axe violations
-- [ ] T056 [P] Run the full feature 001 e2e suite plus `burst.spec.ts` against a production build (`npm run build && npm run preview` with `E2E_BASE_URL`) and locally (SC-009)
-- [ ] T057 Update `README.md`:
+- [X] T054 Responsive pass at 360×740, 740×360, 768×1024, 1024×768 and 1280×800 for Camera (burst ring, counter, Burst button, full banner), Review (strip on phone and desktop) and Annotate (strip plus side panel). No horizontal overflow; the strip scrolls; touch targets at least 44 px (constitution V)
+- [X] T055 [P] Extend `tests/e2e/a11y.spec.ts` with a multi-photo session (burst, then Review, then Annotate), with no serious or critical axe violations
+- [X] T056 [P] Run the full feature 001 e2e suite plus `burst.spec.ts` against a production build (`npm run build && npm run preview` with `E2E_BASE_URL`) and locally (SC-009)
+- [X] T057 Update `README.md`:
   - a Features row for **Burst & multi-photo sessions**;
   - a **Limits** table (3 s, 10 photos per burst, 20 photos per session, 150 MB, about 3 fps, 300 ms tap threshold) with the rationale from constitution VIII;
   - a note that burst photos are at stream resolution and can be lower than a single capture;
   - the single-photo "Add more" link as a deliberate small addition;
   - updated known limitations (export stays per photo; no reordering).
-- [ ] T058 [P] Update `docs/TECHNICAL_NOTES.md` with a new section "4. Burst capture & multi-image sessions": the session store (per-photo `annotationReducer`), the sequential burst scheduler with the limit check, `takePhoto()` versus canvas frames, the one-decode photo processor (thumbnail plus metrics, paused during a burst), and memory accounting and release (including that a deleted photo's memory is released when its 5 s undo window closes, not instantly, and that its bytes stay counted until then; constitution VIII)
+- [X] T058 [P] Update `docs/TECHNICAL_NOTES.md` with a new section "4. Burst capture & multi-image sessions": the session store (per-photo `annotationReducer`), the sequential burst scheduler with the limit check, `takePhoto()` versus canvas frames, the one-decode photo processor (thumbnail plus metrics, paused during a burst), and memory accounting and release (including that a deleted photo's memory is released when its 5 s undo window closes, not instantly, and that its bytes stay counted until then; constitution VIII)
 - [ ] T059 Run every quickstart.md scenario (B1–B16) on the reference Android phone and a desktop browser via the deployed URL. Record the results (burst frame counts at 3 s for SC-001, plus the longest task, release-to-stop delay and switch latency from T047 for SC-003 and SC-006) in the README's tested-devices section
-- [ ] T060 Remove the Sync Impact Report comment from `.specify/memory/constitution.md` (Spec Kit asks for it to be removed before commit), and commit the constitution amendment, the 002 specs and the implementation as focused commits
+- [X] T060 Remove the Sync Impact Report comment from `.specify/memory/constitution.md` (Spec Kit asks for it to be removed before commit), and commit the constitution amendment, the 002 specs and the implementation as focused commits
 
 ---
 
