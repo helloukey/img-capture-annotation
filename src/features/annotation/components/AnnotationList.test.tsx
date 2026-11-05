@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { AppProvider } from '@/app/AppContext';
 import { Toaster } from '@/shared/ui/Toaster';
+import { makeAppState, makePhoto } from '../../../../tests/fakes/appState';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { annotationReducer, initialAnnotationState, type AnnotationState } from '../lib/annotationReducer';
 import { AnnotationProvider } from '../state/AnnotationProvider';
@@ -35,11 +37,18 @@ function SelectionProbe() {
 
 function renderList(state: AnnotationState) {
   return render(
-    <AnnotationProvider imageId="img" initialState={state}>
-      <AnnotationList />
-      <SelectionProbe />
-      <Toaster />
-    </AnnotationProvider>,
+    <AppProvider
+      initialState={makeAppState([makePhoto({ id: 'img' })], {
+        step: 'annotate',
+        annotations: { img: state },
+      })}
+    >
+      <AnnotationProvider>
+        <AnnotationList />
+        <SelectionProbe />
+        <Toaster />
+      </AnnotationProvider>
+    </AppProvider>,
   );
 }
 

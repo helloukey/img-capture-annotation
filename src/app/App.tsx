@@ -1,20 +1,17 @@
-import { useCallback, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AnnotationProvider } from '@/features/annotation/state/AnnotationProvider';
 import { CameraView } from '@/features/camera/components/CameraView';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { Toaster } from '@/shared/ui/Toaster';
 import { TooltipProvider } from '@/shared/ui/Tooltip';
-import { AppFlowProvider, useAppFlow } from './AppFlowContext';
+import { AppProvider, useApp, useSession } from './AppContext';
 import { AnnotateScreen, ReviewScreen } from './screens';
 import { StepIndicator } from './StepIndicator';
 
 function Steps() {
-  const { state, dispatch } = useAppFlow();
-  const reset = () => dispatch({ type: 'RESET' });
-  const onCountChange = useCallback(
-    (count: number) => dispatch({ type: 'SET_ANNOTATION_COUNT', count }),
-    [dispatch],
-  );
+  const { state } = useApp();
+  const { selected, startOver } = useSession();
+  const reset = startOver;
 
   let view: ReactNode;
   switch (state.step) {
@@ -22,10 +19,10 @@ function Steps() {
       view = <CameraView />;
       break;
     case 'review':
-      view = state.image ? <ReviewScreen image={state.image} /> : null;
+      view = selected ? <ReviewScreen image={selected} /> : null;
       break;
     case 'annotate':
-      view = state.image ? <AnnotateScreen image={state.image} /> : null;
+      view = selected ? <AnnotateScreen image={selected} /> : null;
       break;
   }
 
@@ -41,9 +38,10 @@ function Steps() {
         <StepIndicator current={state.step} />
       </header>
       <main className="relative min-h-0 flex-1">
-        {state.image && state.step !== 'camera' ? (
-          // Above both views so annotations survive Annotate → Review → Annotate (data-model §4).
-          <AnnotationProvider key={state.image.id} imageId={state.image.id} onCountChange={onCountChange}>
+        {selected && state.step !== 'camera' ? (
+          // The session store lives above every step (AppProvider); this adapter exposes the
+          // selected photo's annotations to the review and annotate views (research R2).
+          <AnnotationProvider>
             <ErrorBoundary key={state.step} onReset={reset}>
               {view}
             </ErrorBoundary>
@@ -60,11 +58,11 @@ function Steps() {
 
 export function App() {
   return (
-    <AppFlowProvider>
+    <AppProvider>
       <TooltipProvider>
         <Steps />
         <Toaster />
       </TooltipProvider>
-    </AppFlowProvider>
+    </AppProvider>
   );
 }

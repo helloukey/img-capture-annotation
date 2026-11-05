@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSession } from '@/app/AppContext';
 import type { QualityAssessment } from '@/features/quality/lib/types';
 import type { CapturedImage } from '@/shared/types';
 import { Button } from '@/shared/ui/Button';
@@ -17,12 +18,14 @@ import {
 /** Enhancement (US8): download annotation JSON or the photo with boxes drawn on it. */
 export function ExportMenu({ image, quality }: { image: CapturedImage; quality: QualityAssessment | null }) {
   const { state } = useAnnotations();
+  const { photos } = useSession();
+  const photoIndex = photos.length > 1 ? photos.findIndex((p) => p.id === image.id) + 1 : undefined;
   const [open, setOpen] = useState(false);
   const [rendering, setRendering] = useState(false);
   const empty = state.items.length === 0;
 
   const exportData = () => {
-    downloadJson(buildExport(image, state.items, quality), exportFileName(image, 'json'));
+    downloadJson(buildExport(image, state.items, quality), exportFileName(image, 'json', photoIndex));
     notify.success('Annotations exported');
     setOpen(false);
   };
@@ -30,7 +33,7 @@ export function ExportMenu({ image, quality }: { image: CapturedImage; quality: 
   const exportImage = async () => {
     setRendering(true);
     try {
-      downloadBlob(await renderAnnotatedImage(image, state.items), exportFileName(image, 'jpg'));
+      downloadBlob(await renderAnnotatedImage(image, state.items), exportFileName(image, 'jpg', photoIndex));
       notify.success('Annotated image exported');
       setOpen(false);
     } catch {

@@ -1,31 +1,48 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { AppFlowProvider, useAppFlow } from '@/app/AppFlowContext';
-import type { AppFlowState } from '@/app/appFlowReducer';
-import type { CapturedImage } from '@/shared/types';
+import { AppProvider, useApp } from '@/app/AppContext';
+import { annotationReducer, initialAnnotationState } from '@/features/annotation/lib/annotationReducer';
+import { Toaster } from '@/shared/ui/Toaster';
+import { makeAppState, makePhoto } from '../../../../tests/fakes/appState';
 import { ReviewView } from './ReviewView';
 
-const image = { id: 'i1', objectUrl: 'blob:x', width: 4000, height: 3000 } as CapturedImage;
+const image = makePhoto({ id: 'i1', objectUrl: 'blob:x' });
 
 function StepProbe() {
-  const { state } = useAppFlow();
+  const { state } = useApp();
   return <output data-testid="step">{state.step}</output>;
 }
 
-function renderReview(initial: Partial<AppFlowState>, props: Partial<Parameters<typeof ReviewView>[0]> = {}) {
-  const state: AppFlowState = { step: 'review', image, pendingConfirm: null, annotationCount: 0, ...initial };
+function withBoxes(n: number) {
+  let s = initialAnnotationState(image.id);
+  for (let i = 0; i < n; i++)
+    s = annotationReducer(s, {
+      type: 'CREATE',
+      id: `a${i}`,
+      rect: { x: 0, y: 0, width: 50, height: 50 },
+      createdAt: i,
+    });
+  return s;
+}
+
+function renderReview(
+  opts: { annotationCount?: number } = {},
+  props: Partial<Parameters<typeof ReviewView>[0]> = {},
+) {
+  const state = makeAppState([image], { annotations: { [image.id]: withBoxes(opts.annotationCount ?? 0) } });
   return render(
-    <AppFlowProvider initialState={state}>
+    <AppProvider initialState={state}>
       <ReviewView image={image} {...props} />
       <StepProbe />
-    </AppFlowProvider>,
+      <Toaster />
+    </AppProvider>,
   );
 }
 
 describe('ReviewView', () => {
   it('shows the full captured frame with Retake and Use Photo', () => {
-    renderReview({});
+    renderReview();
     expect(screen.getByRole('img', { name: 'Your capture' })).toHaveAttribute('src', 'blob:x');
     expect(screen.getByRole('button', { name: /Retake/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Use Photo/ })).toBeInTheDocument();

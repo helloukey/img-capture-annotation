@@ -1,39 +1,72 @@
 import { useCallback, useRef, useState } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useApp, useSession } from '@/app/AppContext';
+import { ChoosePhotoButton } from '@/features/upload/components/ChoosePhotoButton';
+import { BURST_STOP_COPY, burstAnnouncement } from '@/features/session/lib/burstCopy';
+import type { BurstStopReason } from '@/features/session/lib/burstScheduler';
+import { heldBytes } from '@/features/session/lib/sessionSelectors';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
+import type { Photo } from '@/shared/types';
+import { Button } from '@/shared/ui/Button';
 import { cn } from '@/shared/ui/cn';
 import { notify } from '@/shared/ui/toast';
-import { ChoosePhotoButton } from '@/features/upload/components/ChoosePhotoButton';
+import { useBurst } from '../hooks/useBurst';
 import { useCamera } from '../hooks/useCamera';
 import type { UseTorchResult } from '../hooks/useTorch';
+import { BurstButton } from './BurstButton';
+import { BurstProgress } from './BurstProgress';
 import { CameraErrorState } from './CameraErrorState';
 import { CameraPreview } from './CameraPreview';
 import { PermissionPrimer } from './PermissionPrimer';
-import { TorchToggle } from './TorchToggle';
 import { ShutterButton } from './ShutterButton';
 import { SwitchCameraButton } from './SwitchCameraButton';
+import { TorchToggle } from './TorchToggle';
 
 export function CameraView() {
-  const { dispatch } = useAppFlow();
+  const { stateRef } = useApp();
+  const { addPhotos, fullReason, go } = useSession();
   const camera = useCamera();
   const landscape = useMediaQuery('(orientation: landscape) and (max-height: 600px)');
   const [flashKey, setFlashKey] = useState(0);
+  const [announcement, setAnnouncement] = useState('');
   const torchSupported = useRef(false);
   const onTorch = useCallback((t: UseTorchResult) => {
     torchSupported.current = t.supported;
   }, []);
 
-  const handleCapture = async () => {
-    setFlashKey((k) => k + 1);
-    try {
-      const image = await camera.capture();
-      dispatch({ type: 'CAPTURED', image: { ...image, torchAvailable: torchSupported.current } });
-    } catch {
-      notify.error('Couldn’t take the photo', 'Please try again.');
-    }
+  const onStopped = (reason: BurstStopReason, frames: number) => {
+    setAnnouncement(burstAnnouncement(frames, reason));
+    const why = BURST_STOP_COPY[reason];
+    if (why) (reason === 'interrupted' || reason === 'backgrounded' ? notify.error : notify.info)(why);
   };
 
+  const onPhotos = (photos: Photo[]) => {
+    if (!photos.length) return;
+    const result = addPhotos(photos.map((p) => ({ ...p, torchAvailable: torchSupported.current })));
+    if (result.skipped)
+      notify.info(`${result.skipped} photo${result.skipped === 1 ? '' : 's'} not added: session full`);
+  };
+
+  const burst = useBurst({
+    camera,
+    onPhotos,
+    onStopped,
+    session: () => ({
+      photos: stateRef.current.session.photos.length,
+      heldBytes: heldBytes(stateRef.current.session),
+    }),
+    onFrame: () => setFlashKey((k) => k + 1),
+    onError: () => notify.error('Couldn’t take the photo', 'Please try again.'),
+  });
+
   const live = camera.status === 'live' || camera.status === 'capturing';
+  const fullMessage =
+    fullReason === 'count'
+      ? 'Session full (20 photos). Delete some photos to take more.'
+      : fullReason === 'memory'
+        ? 'Memory limit reached. Delete some photos to take more.'
+        : null;
+  const bursting = burst.phase === 'running';
+  const busyControls = burst.phase !== 'idle';
 
   return (
     <section aria-label="Camera" className="relative h-full w-full overflow-hidden bg-black">
@@ -49,7 +82,10 @@ export function CameraView() {
         <div
           key={flashKey}
           data-testid="shutter-flash"
-          className="pointer-events-none absolute inset-0 bg-white animate-shutter"
+          className={cn(
+            'pointer-events-none absolute inset-0 bg-white animate-shutter',
+            bursting && 'opacity-50',
+          )}
           aria-hidden
         />
       )}
@@ -60,8 +96,9 @@ export function CameraView() {
         </div>
       )}
 
+      {/* Torch and camera switching are unavailable during a burst (FR-009). */}
       {live && (
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3" inert={busyControls || undefined}>
           <TorchToggle track={camera.track} onTorch={onTorch} />
         </div>
       )}
@@ -69,30 +106,68 @@ export function CameraView() {
       {camera.status !== 'error' && (
         <div
           className={cn(
-            'absolute flex items-center justify-between gap-4',
+            'absolute items-center gap-4',
             landscape
-              ? 'inset-y-0 right-0 w-28 flex-col-reverse justify-center py-6 pr-[max(1rem,env(safe-area-inset-right))]'
-              : 'inset-x-0 bottom-0 safe-bottom px-8 pt-6 bg-gradient-to-t from-black/70 to-transparent',
+              ? 'inset-y-0 right-0 flex w-28 flex-col-reverse justify-center py-6 pr-[max(1rem,env(safe-area-inset-right))]'
+              : 'inset-x-0 bottom-0 safe-bottom grid grid-cols-[1fr_auto_1fr] px-6 pt-10 bg-gradient-to-t from-black/70 to-transparent',
           )}
         >
-          <div className="flex h-12 w-12 items-center justify-center">
+          <div
+            className="flex h-12 w-12 items-center justify-center justify-self-start"
+            inert={busyControls || undefined}
+          >
             <ChoosePhotoButtonCompact />
           </div>
-          <ShutterButton
-            onCapture={() => void handleCapture()}
-            disabled={!live}
-            busy={camera.status === 'capturing'}
-          />
-          <div className="flex h-12 w-12 items-center justify-center">
+          <div className="relative">
+            <ShutterButton
+              handlers={burst.shutterHandlers}
+              disabled={!live || (fullMessage !== null && burst.phase === 'idle')}
+              busy={camera.status === 'capturing'}
+              describedBy={fullMessage ? 'session-full-message' : undefined}
+            />
+            {bursting && burst.startedAt !== null && (
+              <BurstProgress startedAt={burst.startedAt} frames={burst.frameCount} />
+            )}
+          </div>
+          <div className={cn('flex items-center gap-2 justify-self-end', landscape && 'flex-col')}>
+            {/* Stays usable during a burst: activating it again stops the burst (US5). */}
+            <BurstButton
+              running={bursting}
+              disabled={!live || burst.phase === 'pressing' || (fullMessage !== null && !bursting)}
+              onToggle={burst.toggleBurst}
+            />
             {camera.canSwitchCamera && (
-              <SwitchCameraButton
-                onSwitch={() => void camera.switchCamera()}
-                disabled={camera.status !== 'live'}
-              />
+              <div inert={busyControls || undefined}>
+                <SwitchCameraButton
+                  onSwitch={() => void camera.switchCamera()}
+                  disabled={camera.status !== 'live'}
+                />
+              </div>
             )}
           </div>
         </div>
       )}
+
+      {fullMessage && burst.phase === 'idle' && camera.status !== 'error' && (
+        <div
+          className={cn(
+            'absolute left-1/2 z-10 flex w-[min(92vw,26rem)] -translate-x-1/2 items-center gap-3 rounded-2xl',
+            'border border-border bg-surface-raised/95 p-3 text-sm shadow-xl backdrop-blur',
+            landscape ? 'top-14' : 'bottom-36',
+          )}
+        >
+          <p id="session-full-message" className="flex-1">
+            {fullMessage}
+          </p>
+          <Button variant="secondary" onClick={() => go('review')}>
+            Review photos
+          </Button>
+        </div>
+      )}
+
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
     </section>
   );
 }

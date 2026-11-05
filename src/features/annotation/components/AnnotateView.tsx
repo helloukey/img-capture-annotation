@@ -1,9 +1,12 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react';
-import { useAppFlow } from '@/app/AppFlowContext';
+import { useSession } from '@/app/AppContext';
+import { PhotoStrip } from '@/features/session/components/PhotoStrip';
+import { DELETE_COPY, useDeletePhoto } from '@/features/session/hooks/useDeletePhoto';
+import { useStartOver } from '@/features/session/hooks/useStartOver';
+import { useStripData } from '@/features/session/hooks/useStripData';
 import type { CapturedImage } from '@/shared/types';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import { cn } from '@/shared/ui/cn';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { IconButton } from '@/shared/ui/IconButton';
 import { List, SquareDashed, Trash2 } from '@/shared/ui/icons';
 import { Sheet } from '@/shared/ui/Sheet';
@@ -26,7 +29,12 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewProps) {
-  const { state: flow, dispatch: flowDispatch } = useAppFlow();
+  const { go, photos, selectedId, select: selectPhoto } = useSession();
+  const retake = useDeletePhoto();
+  const remove = useDeletePhoto(DELETE_COPY);
+  const restart = useStartOver();
+  const strip = useStripData();
+  const multi = photos.length > 1;
   const { state, selected, select, rename, deleteWithUndo, displayName } = useAnnotations();
   const wide = useMediaQuery('(min-width: 768px)');
   const [panelOpen, setPanelOpen] = useState(true);
@@ -53,8 +61,9 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- delegated shortcuts for the canvas and list
     <section aria-label="Annotate photo" className="flex h-full flex-col" onKeyDown={onKeyDown}>
       <AnnotationToolbar
-        onBack={() => flowDispatch({ type: 'BACK_TO_REVIEW' })}
-        onRetake={() => flowDispatch({ type: 'RETAKE' })}
+        onBack={() => go('review')}
+        onRetake={multi ? restart.request : () => retake.request(image.id)}
+        retakeLabel={multi ? 'Start over' : 'Retake'}
         quality={quality}
         actions={
           <>
@@ -78,9 +87,20 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
         }
       />
 
+      <PhotoStrip
+        photos={photos}
+        selectedId={selectedId}
+        onSelect={selectPhoto}
+        onDelete={remove.request}
+        annotationCounts={strip.annotationCounts}
+        verdicts={strip.verdicts}
+        className="shrink-0 border-b border-border bg-surface-raised"
+      />
+
       <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 min-w-0 flex-1 bg-black/60">
-          <AnnotationCanvas image={image} />
+          {/* Keyed per photo: switching photos drops any in-progress gesture (US3). */}
+          <AnnotationCanvas key={image.id} image={image} />
         </div>
         {wide && panelOpen && (
           <aside
@@ -102,7 +122,7 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
         {selected ? (
           <>
             <LabelEditor
-              key={selected.id}
+              key={`${image.id}:${selected.id}`}
               annotation={selected}
               placeholder={`Label for ${displayName(selected)}`}
               onCommit={(label) => rename(selected.id, label)}
@@ -125,15 +145,9 @@ export function AnnotateView({ image, quality, toolbarActions }: AnnotateViewPro
         )}
       </div>
 
-      <ConfirmDialog
-        open={flow.pendingConfirm === 'retake'}
-        title="Discard annotations?"
-        description={`Retaking will discard ${state.items.length} annotation${state.items.length === 1 ? '' : 's'} on this photo.`}
-        confirmLabel="Discard and retake"
-        destructive
-        onConfirm={() => flowDispatch({ type: 'CONFIRM' })}
-        onCancel={() => flowDispatch({ type: 'CANCEL' })}
-      />
+      {retake.dialog}
+      {remove.dialog}
+      {restart.dialog}
     </section>
   );
 }

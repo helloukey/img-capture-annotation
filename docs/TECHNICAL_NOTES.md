@@ -133,3 +133,79 @@ The code is in [`geometry.ts`](../src/features/annotation/lib/geometry.ts) and i
 - **Deletes are undoable.** Delete and Clear all store a token-tagged snapshot that the undo toast can restore for 5 seconds. A newer delete invalidates older Undo buttons, so an old toast can't restore the wrong box.
 - **The canvas and the list read from the same store**, so selection, renaming, and deletion stay in sync in both directions.
 - **Keyboard support:** Tab moves between boxes, Delete or Backspace removes one, Escape deselects, and Enter edits the label. Shortcuts are ignored while you're typing in an input.
+
+## 4. Burst capture & multi-image sessions
+
+This section covers feature 002. The full decision log is in
+[`specs/002-burst-multi-image-capture/research.md`](../specs/002-burst-multi-image-capture/research.md),
+and the limits come from constitution Principle VIII.
+
+### Session store
+
+The code is in [`appReducer.ts`](../src/app/appReducer.ts) and [`AppContext.tsx`](../src/app/AppContext.tsx).
+
+- **One root reducer** holds the step and the session: the photos in capture order, the selected
+  photo, one annotation slice per photo, and deleted photos still inside their undo window.
+- **Per-photo annotations reuse feature 001 unchanged.** Each photo's slice is driven by the same
+  `annotationReducer`; `{ type: 'ANNOTATION', photoId, action }` routes an action to one photo.
+  Because the slices are separate, annotations can't leak between photos.
+- **Undo targets the right photo.** Deleting an annotation captures its `photoId`, so the undo toast
+  restores it to that photo even after the user has switched to another.
+- **The store sits above every screen.** "Add more" goes back to the camera without unmounting the
+  session.
+
+### Tap or hold, and the burst loop
+
+The code is in [`burstScheduler.ts`](../src/features/session/lib/burstScheduler.ts) and
+[`useBurst.ts`](../src/features/camera/hooks/useBurst.ts).
+
+- **Tap or hold.** A press of 300 ms or less is a tap and uses feature 001's single
+  `takePhoto()` capture. Holding longer starts a burst.
+- **The loop is sequential:** check the limits, capture one frame and **await** its encoding, then
+  wait out the rest of the 333 ms interval. A slow device therefore takes fewer frames rather than
+  queueing work. Unit tests check that captures never overlap, using 50 randomized runs.
+- **Limits are checked before every frame:** 3 s, 10 frames, 20 photos in the session, and 150 MB.
+  The memory check uses the last frame's size as the estimate. A frame that turns out larger than
+  the remaining budget is **discarded and released**, so the budget is never exceeded.
+- **Burst frames come from the live stream.** `takePhoto()` takes 300–1000 ms per shot and can
+  refocus or fire the flash, which rules it out at about 3 fps. Burst frames are drawn from the
+  live video onto a canvas at the stream's full `videoWidth × videoHeight` and encoded as JPEG 0.95
+  (`captureMethod: 'burst'`). Each photo reports its own resolution.
+- **Release anywhere ends the burst.** The shutter takes pointer capture, so sliding off it doesn't
+  stop the burst; lifting the finger anywhere does. Only the first pointer counts, and the
+  long-press context menu is prevented.
+- **No ghost taps.** If a limit stops the burst while the finger is still down, the app reports it
+  immediately but hands over the photos only when the finger lifts. On top of that, one synthetic
+  click near the release point is swallowed for 600 ms. Without these, lifting the finger would tap
+  whichever Review button had appeared under it. The Pixel 7 e2e run caught this.
+
+### Background photo processing
+
+The code is in [`photoProcessor.ts`](../src/features/session/lib/photoProcessor.ts).
+
+- **One decode per photo, one photo at a time**, scheduled with `requestIdleCallback`. The
+  selected photo goes first. The single decode feeds both the quality metrics (512 px analysis
+  copy) and a 160 px thumbnail.
+- **Paused during a burst**, so no pixel work competes with capture.
+- **Thumbnails only in the strip.** It never renders full-resolution images; 20 of them at 12 MP
+  would mean about 1 GB of decoded bitmaps.
+
+### Memory accounting and release
+
+- **Bytes held** are the live photos plus the photos inside their undo window, because their blobs
+  are still in memory.
+- **Release is deferred to the end of the undo window.** A deleted photo's memory is not freed
+  instantly: its object URL and thumbnail are revoked when the 5 s window closes, and its bytes keep
+  counting toward the limit until then.
+- **Start over, reset and unmount** release everything at once.
+
+### Measured performance
+
+Run with `PERF=1 npm run test:e2e -- perf` (desktop Chromium, fake camera at 3840 × 2160):
+
+- no main-thread task over 50 ms during a burst;
+- under 1 ms from release to the burst stopping;
+- 14–38 ms to switch photos.
+
+The same measurement on the reference Android phone is still to be done. If the phone shows long
+tasks, the documented fallback is to encode in a worker with `OffscreenCanvas` (research R4).

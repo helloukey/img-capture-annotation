@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSession } from '@/app/AppContext';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Eraser, SquareDashed } from '@/shared/ui/icons';
@@ -7,6 +8,7 @@ import { AnnotationListItem } from './AnnotationListItem';
 
 /** View and manage all annotations; shares the canvas's store (FR-027). */
 export function AnnotationList({ showHeading = true }: { showHeading?: boolean }) {
+  const multi = useSession().photos.length > 1;
   const { state, select, rename, deleteWithUndo, clearAllWithUndo, displayName } = useAnnotations();
   const [confirmClear, setConfirmClear] = useState(false);
   const n = state.items.length;
@@ -16,6 +18,7 @@ export function AnnotationList({ showHeading = true }: { showHeading?: boolean }
       <div className="flex items-center justify-between gap-2">
         <h2 className={showHeading ? 'text-sm font-semibold' : 'sr-only'} aria-live="polite">
           {n} annotation{n === 1 ? '' : 's'}
+          {multi && ' on this photo'}
         </h2>
         {n > 0 && (
           <Button variant="ghost" className="text-poor" onClick={() => setConfirmClear(true)}>

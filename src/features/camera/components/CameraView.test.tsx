@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react';
 import { describe, expect, it } from 'vitest';
-import { AppFlowProvider } from '@/app/AppFlowContext';
+import { AppProvider } from '@/app/AppContext';
 import {
   domError,
   installFakeMediaDevices,
@@ -13,9 +13,9 @@ import { CameraView } from './CameraView';
 
 function renderCamera() {
   return render(
-    <AppFlowProvider>
+    <AppProvider>
       <CameraView />
-    </AppFlowProvider>,
+    </AppProvider>,
   );
 }
 

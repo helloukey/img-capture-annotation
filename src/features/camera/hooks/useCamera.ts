@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createCapturedImage } from '@/shared/capturedImage';
 import type { CapturedImage } from '@/shared/types';
-import { capturePhoto } from '../lib/capture';
+import { captureVideoFrame, capturePhoto } from '../lib/capture';
 import {
   cameraError,
   classifyCameraError,
@@ -39,6 +39,8 @@ export interface UseCameraResult {
   retry(): Promise<void>;
   switchCamera(deviceId?: string): Promise<void>;
   capture(): Promise<CapturedImage>;
+  /** One burst frame at the stream's full resolution; the stream keeps running (research R4). */
+  captureFrame(): Promise<CapturedImage>;
 }
 
 function isOverconstrained(err: unknown): boolean {
@@ -297,6 +299,23 @@ export function useCamera({
     return promise;
   }, [releaseStream, updateStatus]);
 
+  const captureFrame = useCallback(async (): Promise<CapturedImage> => {
+    const video = videoRef.current;
+    const videoTrack = streamRef.current?.getVideoTracks()[0];
+    if (statusRef.current !== 'live' || !video || !videoTrack) {
+      throw cameraError('capture-failed', new Error('The camera is not ready.'));
+    }
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    const blob = await captureVideoFrame(video);
+    return createCapturedImage(blob, {
+      source: 'camera',
+      captureMethod: 'burst',
+      size: { width, height },
+      ...(videoTrack.label ? { cameraLabel: videoTrack.label } : {}),
+    });
+  }, []);
+
   const visible = usePageVisibility();
 
   // Release the camera while the page is hidden; resume when it becomes visible again.
@@ -353,5 +372,6 @@ export function useCamera({
     retry,
     switchCamera,
     capture,
+    captureFrame,
   };
 }

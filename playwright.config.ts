@@ -8,6 +8,9 @@ const REMOTE = process.env.E2E_BASE_URL;
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
+  // Burst tests encode 4K fake-camera frames; more parallel browsers starve each other's CPU
+  // and make capture timing (and so frame counts) flaky.
+  workers: process.env.CI ? 1 : 2,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],

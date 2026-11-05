@@ -59,3 +59,54 @@ export async function surfacePoint(page: Page, fx: number, fy: number): Promise<
   if (!box) throw new Error('annotation surface not visible');
   return { x: box.x + box.width * fx, y: box.y + box.height * fy };
 }
+
+/** Opens the camera and waits until the shutter is live. */
+export async function openCamera(page: Page) {
+  await page.goto('/');
+  const video = page.getByTestId('camera-preview');
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.videoWidth)).toBeGreaterThan(0);
+  await expect(page.getByRole('button', { name: 'Capture photo' })).toBeEnabled();
+  return video;
+}
+
+/** Holds the shutter for `ms` with real input (CDP touch on touch projects, mouse otherwise). */
+export async function holdShutter(page: Page, ms: number) {
+  const box = await page.getByRole('button', { name: 'Capture photo' }).boundingBox();
+  if (!box) throw new Error('shutter not visible');
+  const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const isTouch = await page.evaluate(() => navigator.maxTouchPoints > 0);
+  if (isTouch) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] });
+    await page.waitForTimeout(ms);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+  } else {
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await page.waitForTimeout(ms);
+    await page.mouse.up();
+  }
+}
+
+/** Number of photos in the session, read from the strip (0 when the strip is hidden). */
+export async function stripCount(page: Page): Promise<number> {
+  const strip = page.getByRole('toolbar', { name: /^Photos \(/ });
+  if ((await strip.count()) === 0)
+    return (await page.getByRole('img', { name: 'Your capture' }).count()) ? 1 : 0;
+  return Number((await strip.getAttribute('aria-label'))!.match(/\((\d+)\)/)![1]);
+}
+
+/** The first box's position and size as fractions of the rendered image (alignment checks). */
+export async function fractions(page: Page) {
+  return page.evaluate(() => {
+    const img = document.querySelector('[data-testid="annotation-stage"] img')!.getBoundingClientRect();
+    const box = document.querySelector('[data-annotation-id] rect')!.getBoundingClientRect();
+    return {
+      x: (box.left - img.left) / img.width,
+      y: (box.top - img.top) / img.height,
+      w: box.width / img.width,
+      h: box.height / img.height,
+    };
+  });
+}

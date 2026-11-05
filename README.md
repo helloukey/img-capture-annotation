@@ -15,6 +15,7 @@ A React app that captures photos at the highest resolution your device's camera 
 | **Quality indicator** | Shows resolution, file size, brightness, and sharpness, with a Good / Fair / Poor verdict and a specific tip for each failed check. It's prominent on Review and appears as a compact badge on Annotate. |
 | **Annotation** | Draw boxes with mouse, touch, or pen. You can select, move, resize from 8 handles, label (up to 50 characters), and delete them, with a 5-second undo. Boxes are stored in image pixels, so they stay aligned at any screen size. |
 | **Annotation list** | Selection stays in sync with the canvas, and you can rename, delete, or Clear all (with confirmation). It's a side panel on tablet and desktop and a bottom sheet on phones. |
+| **Burst & multi-photo sessions** *(feature 002)* | Hold the shutter to take a burst (about 3 photos per second); a tap still takes one photo. Review and Annotate show a strip of every photo: delete any photo (with undo), add more, start over, and annotate each photo separately. A **Burst** button offers the same without holding, and **Choose a photo** accepts several files. |
 | **Export** *(enhancement)* | Download JSON with full-resolution pixel coordinates, or a JPEG with the boxes drawn on it. |
 | **Privacy** | Everything runs in the browser. Photos never leave the device, and an e2e test asserts no requests go to other origins. |
 
@@ -45,10 +46,10 @@ Open the URL on a phone connected to the same Wi-Fi network and accept the certi
 | `npm run build` / `preview` | Type-check, build the production bundle, and serve it |
 | `npm run lint` | ESLint (typescript-eslint strict, react-hooks, jsx-a11y) |
 | `npm run typecheck` | `tsc --noEmit` in strict mode |
-| `npm test` | Vitest unit and component tests (167 tests) |
+| `npm test` | Vitest unit and component tests (247 tests) |
 | `npm run test:e2e` | Playwright on a real Chromium fake camera, with desktop and Pixel 7 (touch) projects |
 
-The first time you run the e2e tests, install the browser with `npx playwright install chromium`. To run the suite against a deployed site instead of the local dev server, set `E2E_BASE_URL`, for example `E2E_BASE_URL=https://img-capture-annotation.netlify.app npm run test:e2e`.
+The first time you run the e2e tests, install the browser with `npx playwright install chromium`. To run the suite against a deployed site instead of the local dev server, set `E2E_BASE_URL`, for example `E2E_BASE_URL=https://img-capture-annotation.netlify.app npm run test:e2e`. `PERF=1 npm run test:e2e -- perf` measures burst performance (main-thread long tasks, release-to-stop delay, photo-switch time).
 
 ## Architecture
 
@@ -58,7 +59,8 @@ The code is organized by feature. Each feature separates React code (`components
 src/
 ├── app/                 App shell, Capture → Review → Annotate state machine, step indicator
 ├── features/
-│   ├── camera/          useCamera / useTorch hooks (the only code that calls media APIs), capture, error taxonomy
+│   ├── camera/          useCamera / useTorch / useBurst hooks (the only code that calls media APIs), capture, error taxonomy
+│   ├── session/         Burst scheduler, session limits and selectors, background photo processor, photo strip
 │   ├── review/          Review screen
 │   ├── upload/          "Choose a photo" fallback
 │   ├── quality/         Pixel metrics, thresholds, assessment, indicator UI
@@ -68,11 +70,11 @@ tests/fakes/             Fake MediaStreamTrack / mediaDevices / ImageCapture for
 tests/e2e/               Playwright specs
 ```
 
-- **State.** There are two pure reducers. `appFlowReducer` handles the step and image, and guards destructive transitions such as retaking while annotations exist. `annotationReducer` holds the boxes, selection, and the undo snapshot. `AnnotationProvider` sits *above* the Review and Annotate views, so your annotations are still there after you go back to Review.
+- **State.** One pure root reducer, `appReducer`, holds the step and the session: up to 20 photos, the selected photo, one annotation slice per photo, and deleted photos still inside their undo window. Each photo's slice is driven by the same `annotationReducer` (boxes, selection, undo). `AppProvider` sits above every screen, so the session survives "Add more" trips back to the camera; `AnnotationProvider` exposes the selected photo's annotations to the canvas and list.
 - **Error boundaries.** Each view has its own error boundary, so an unexpected error shows a "Start over" screen instead of a blank page.
 - **Third-party UI.** Libraries are reachable only through `src/shared/ui/`. ESLint's `no-restricted-imports` blocks direct imports of `sonner` and `lucide-react` anywhere else.
 
-The detailed design lives in [`specs/001-image-capture-annotation/`](specs/001-image-capture-annotation/): the spec, plan, research decisions, data model, and contracts.
+The detailed design lives in [`specs/001-image-capture-annotation/`](specs/001-image-capture-annotation/) and [`specs/002-burst-multi-image-capture/`](specs/002-burst-multi-image-capture/): the specs, plans, research decisions, data models, and contracts.
 
 ## Key decisions and libraries
 
@@ -134,9 +136,28 @@ Reproduce it with `node scripts/calibrate-sharpness.mjs <photo.jpg>`. The scores
 
 Automated coverage also comes from Playwright's Chromium fake camera, at desktop size and in Pixel 7 touch emulation, run both locally and against the live site.
 
+## Burst limits
+
+Bursts and sessions have hard limits so the browser never freezes or runs out of memory (constitution Principle VIII). They are defined in one place: [`src/features/session/lib/limits.ts`](src/features/session/lib/limits.ts).
+
+| Limit | Value | Why |
+|---|---|---|
+| Tap vs hold | ≤ 300 ms is a tap (one photo) | Matches common camera apps; a quick tap never bursts by accident |
+| Burst cadence | about 3 photos per second | The next photo starts only after the previous one is saved, so a slow phone takes fewer photos instead of falling behind |
+| Burst length | 3 seconds, at most 10 photos | Enough for a moving subject; keeps one burst near 40 MB at 12 MP |
+| Session size | 20 photos | Keeps the strip, analysis and memory manageable on phones |
+| Memory | 150 MB of photo data | A 12 MP JPEG is about 3–4 MB; this stays well inside mobile browser limits. Deleted photos count until their 5 s undo window closes |
+
+When a limit stops a burst, the app says which one. A full session disables the shutter with a message and a **Review photos** button.
+
+Measured on desktop Chromium with the fake camera (`PERF=1`): no main-thread task over 50 ms during a burst, under 1 ms from release to the burst stopping, and 14–38 ms to switch photos. _TODO (T059): the same measurement on the reference Android phone._
+
 ## Known limitations and trade-offs
 
-- **One photo per session, kept in memory.** A page reload discards the photo and its annotations. Persistence was out of scope for the one-week timeline.
+- **Sessions are kept in memory.** A page reload discards the photos and annotations. Persistence was out of scope.
+- **Burst photos use the live stream's resolution.** Bursts grab frames from the live video (`takePhoto()` is too slow for about 3 photos per second), so on phones with a higher-resolution still camera, burst photos are smaller than single taps. Each photo shows its own resolution.
+- **Export is per photo.** Exporting every photo at once, reordering photos, and picking a best shot are out of scope.
+- **"Add more" on a single photo.** A one-photo session keeps feature 001's Retake / Use Photo layout, plus a small "Add more photos" link, which is the only visible change.
 - **Rectangles only.** No rotated boxes, polygons, or zoom/pan beyond the browser's own pinch-zoom.
 - **The preview crops; the capture doesn't.** The live preview fills the screen (`object-fit: cover`), so its edges are cropped. The Review screen always shows the full captured frame.
 - **iOS resolution ceiling.** Safari has no `ImageCapture` API, so photos are capped at the stream resolution rather than the sensor's full photo resolution.
@@ -161,4 +182,4 @@ Either way, every push to `main` redeploys automatically.
 
 ## Spec-driven development
 
-This project was built with [Spec Kit](https://github.com/github/spec-kit). Every decision traces back to the documents in `specs/001-image-capture-annotation/`. `tasks.md` tracks implementation status, and the remaining manual items are device calibration, device validation, deployment, and the demo video.
+This project was built with [Spec Kit](https://github.com/github/spec-kit). Every decision traces back to the documents in `specs/001-image-capture-annotation/` (the assignment) and `specs/002-burst-multi-image-capture/` (burst capture and multi-photo sessions). Each feature's `tasks.md` tracks implementation status; the remaining manual item for feature 002 is validation on the reference Android phone.

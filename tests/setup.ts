@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { notify } from '@/shared/ui/toast';
 import type { SizedBlob } from './fakes/fakeImage';
 
 let urlCounter = 0;
@@ -57,6 +58,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  notify.dismissAll();
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
